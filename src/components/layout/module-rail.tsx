@@ -13,7 +13,7 @@ export function ModuleRail() {
   return (
     <nav
       aria-label="Modules"
-      className="hidden w-[68px] shrink-0 flex-col items-center gap-1 border-r bg-sidebar py-3 md:flex"
+      className="hidden w-[68px] shrink-0 flex-col items-center gap-1 border-r bg-sidebar py-3 md:flex print:!hidden"
     >
       {MODULES.filter((m) => can(m.key)).map((module) => {
         const Icon = module.icon

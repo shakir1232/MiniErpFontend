@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatCurrency, formatDate } from '@/lib/format'
-import { ledgerBalance, useAccountingStore, useGroupLookup, useLedgerLookup } from '../store'
+import { ledgerBalance, useAccountingStore, useGroupLookup } from '../store'
 import type { Ledger } from '../types'
 
 /* ---------------------------------- Trial balance --------------------------------- */

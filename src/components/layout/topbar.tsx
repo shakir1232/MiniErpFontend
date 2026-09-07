@@ -14,7 +14,7 @@ export function Topbar() {
   const setCommandOpen = useUiStore((s) => s.setCommandOpen)
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-2 backdrop-blur sm:px-4">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-2 backdrop-blur sm:px-4 print:hidden">
       <MobileNav />
       <Button
         variant="ghost"

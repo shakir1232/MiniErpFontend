@@ -160,3 +160,32 @@
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
+
+@media print {
+  /* Report pages should print as documents, not as an app screenshot. */
+  :root {
+    --background: white;
+    --card: white;
+    --foreground: black;
+  }
+  body {
+    background: white;
+  }
+  [data-slot="button"],
+  [data-slot="select-trigger"],
+  [data-slot="dropdown-menu-trigger"] {
+    display: none !important;
+  }
+  [data-print-keep] {
+    display: revert !important;
+  }
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+  }
+  thead {
+    display: table-header-group;
+  }
+}

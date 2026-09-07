@@ -74,6 +74,55 @@ import {
   StoreItemsPage,
   StoreRegisterPage,
 } from '@/features/store/pages/store-pages'
+import {
+  AddLetterPage,
+  DispatchPage,
+  LetterDashboardPage,
+  LetterRegisterPage,
+  LettersListPage,
+  MemosPage,
+} from '@/features/letters/pages/letters-pages'
+import {
+  AssociationGroupsPage,
+  BankBranchesPage,
+  BanksPage,
+  CurrenciesPage,
+  FundCategoriesPage,
+  FundSourcesPage,
+  FundingAgenciesPage,
+  ImplementingAgenciesPage,
+  MinistriesPage,
+  MinistryDirectoratesPage,
+  ProjectSectorsPage,
+  ProjectTypesPage,
+  SignaturesPage,
+} from '@/features/settings/pages/settings-pages'
+import { MenuPermissionsPage, RolesPage, UsersPage } from '@/features/users/pages/users-pages'
+import {
+  AdbGroupCategoryPage,
+  RadpReportPage,
+  TrancheMappingPage,
+} from '@/features/budget/pages/tranche-mapping-page'
+import {
+  FapadReportPage,
+  FinancialStatementPage,
+  IasDisbursementPage,
+  MonthlyExpensePage,
+  SoeReportPage,
+  StipendReportPage,
+  SummaryBalancePage,
+  TaxCertificatePage,
+  TrainingGrantStatementPage,
+} from '@/features/accounting/pages/statement-pages'
+import {
+  AdditionalSalaryPage,
+  EmployeeStatementPage,
+  EmployeeTaxCertificatePage,
+  ExpenditureBalancePage,
+  IncrementalDetailsPage,
+  SalaryAdvicePage,
+  VatTaxStatementPage,
+} from '@/features/payroll/pages/payroll-statement-pages'
 
 /**
  * Screens that are actually built. Anything else declared in the navigation
@@ -143,6 +192,47 @@ const IMPLEMENTED: Record<string, ReactElement> = {
   '/store/issues': <ItemIssuesPage />,
   '/store/register': <StoreRegisterPage />,
   '/store/stock': <StockPositionPage />,
+  '/letters': <LetterDashboardPage />,
+  '/letters/list': <LettersListPage />,
+  '/letters/new': <AddLetterPage />,
+  '/letters/dispatch': <DispatchPage />,
+  '/letters/memos': <MemosPage />,
+  '/letters/register': <LetterRegisterPage />,
+  '/settings/implementing-agencies': <ImplementingAgenciesPage />,
+  '/settings/funding-agencies': <FundingAgenciesPage />,
+  '/settings/ministries': <MinistriesPage />,
+  '/settings/ministry-directorates': <MinistryDirectoratesPage />,
+  '/settings/fund-sources': <FundSourcesPage />,
+  '/settings/fund-categories': <FundCategoriesPage />,
+  '/settings/currencies': <CurrenciesPage />,
+  '/settings/banks': <BanksPage />,
+  '/settings/bank-branches': <BankBranchesPage />,
+  '/settings/project-types': <ProjectTypesPage />,
+  '/settings/project-sectors': <ProjectSectorsPage />,
+  '/settings/signatures': <SignaturesPage />,
+  '/settings/association-groups': <AssociationGroupsPage />,
+  '/users': <UsersPage />,
+  '/users/roles': <RolesPage />,
+  '/users/menus': <MenuPermissionsPage />,
+  '/budget/tranche-mapping': <TrancheMappingPage />,
+  '/budget/adb-group-category': <AdbGroupCategoryPage />,
+  '/budget/reports/radp': <RadpReportPage />,
+  '/accounting/reports/summary-balance': <SummaryBalancePage />,
+  '/accounting/reports/stipend': <StipendReportPage />,
+  '/accounting/reports/training-grant-statement': <TrainingGrantStatementPage />,
+  '/accounting/reports/monthly-expense': <MonthlyExpensePage />,
+  '/accounting/reports/ias-disbursement': <IasDisbursementPage />,
+  '/accounting/reports/fapad': <FapadReportPage />,
+  '/accounting/reports/soe': <SoeReportPage />,
+  '/accounting/reports/financial-statement': <FinancialStatementPage />,
+  '/accounting/reports/tax-certificate': <TaxCertificatePage />,
+  '/payroll/additional-salary': <AdditionalSalaryPage />,
+  '/payroll/statements/salary-advice': <SalaryAdvicePage />,
+  '/payroll/statements/vat-tax': <VatTaxStatementPage />,
+  '/payroll/statements/employee': <EmployeeStatementPage />,
+  '/payroll/statements/tax-certificate': <EmployeeTaxCertificatePage />,
+  '/payroll/statements/expenditure-balance': <ExpenditureBalancePage />,
+  '/payroll/statements/incremental': <IncrementalDetailsPage />,
 }
 
 export function AppRoutes() {

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { create } from 'zustand'
 import { uid } from '@/lib/id'
 import {
+  adbGroupCategories as seedAdbGroupCategories,
   adbGroups as seedAdbGroups,
   budgetItems as seedItems,
   contractImplementations as seedContracts,
@@ -10,10 +11,13 @@ import {
   implementationProblems as seedProblems,
   progressReports as seedProgress,
   tranches as seedTranches,
+  trancheMappings as seedTrancheMappings,
   yearlyAllocations as seedAllocations,
 } from './data/budget'
 import type {
   AdbGroup,
+  AdbGroupCategory,
+  TrancheMapping,
   BudgetItem,
   ContractImplementation,
   ExpenditureEntry,
@@ -28,6 +32,8 @@ type BudgetState = {
   items: BudgetItem[]
   allocations: YearlyAllocation[]
   adbGroups: AdbGroup[]
+  adbGroupCategories: AdbGroupCategory[]
+  trancheMappings: TrancheMapping[]
   mappings: GroupMapping[]
   tranches: Tranche[]
   expenditure: ExpenditureEntry[]
@@ -41,12 +47,16 @@ type BudgetState = {
   addTranche: (tranche: Omit<Tranche, 'id'>) => void
   addExpenditure: (entry: Omit<ExpenditureEntry, 'id'>) => void
   addProblem: (problem: Omit<ImplementationProblem, 'id'>) => void
+  addAdbGroupCategory: (category: Omit<AdbGroupCategory, 'id'>) => void
+  addTrancheMapping: (mapping: Omit<TrancheMapping, 'id'>) => void
 }
 
 export const useBudgetStore = create<BudgetState>()((set) => ({
   items: seedItems,
   allocations: seedAllocations,
   adbGroups: seedAdbGroups,
+  adbGroupCategories: seedAdbGroupCategories,
+  trancheMappings: seedTrancheMappings,
   mappings: seedMappings,
   tranches: seedTranches,
   expenditure: seedExpenditure,
@@ -60,6 +70,10 @@ export const useBudgetStore = create<BudgetState>()((set) => ({
   addTranche: (tranche) => set((s) => ({ tranches: [...s.tranches, { ...tranche, id: uid('tr') }] })),
   addExpenditure: (entry) => set((s) => ({ expenditure: [{ ...entry, id: uid('exp') }, ...s.expenditure] })),
   addProblem: (problem) => set((s) => ({ problems: [{ ...problem, id: uid('ip') }, ...s.problems] })),
+  addAdbGroupCategory: (category) =>
+    set((s) => ({ adbGroupCategories: [...s.adbGroupCategories, { ...category, id: uid('agc') }] })),
+  addTrancheMapping: (mapping) =>
+    set((s) => ({ trancheMappings: [{ ...mapping, id: uid('tm') }, ...s.trancheMappings] })),
 }))
 
 export function useBudgetItemLookup() {

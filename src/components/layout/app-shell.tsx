@@ -18,17 +18,17 @@ export function AppShell() {
   }, [pathname])
 
   return (
-    <div className="flex h-svh w-full overflow-hidden bg-background">
+    <div className="flex h-svh w-full overflow-hidden bg-background print:h-auto print:overflow-visible">
       <ModuleRail />
       <ModuleNav
         className={cn(
-          'hidden w-64 shrink-0 border-r md:flex',
+          'hidden w-64 shrink-0 border-r md:flex print:!hidden',
           collapsed && 'md:hidden',
         )}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
-        <main ref={mainRef} id="main" className="min-h-0 flex-1 overflow-y-auto">
+        <main ref={mainRef} id="main" className="min-h-0 flex-1 overflow-y-auto print:overflow-visible">
           <Outlet />
         </main>
       </div>

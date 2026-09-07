@@ -81,16 +81,32 @@ Password is ignored. Role changes which modules appear.
 
 ## Module status
 
-| Module | State |
-| --- | --- |
-| Dashboard | Built |
-| Project | Built |
-| Budget | Navigation mapped, screens pending |
-| Accounting | Navigation mapped, screens pending |
-| Payroll | Navigation mapped, screens pending |
-| HR Management | Navigation mapped, screens pending |
-| Asset Management | Navigation mapped, screens pending |
-| Consumer Item | Navigation mapped, screens pending |
-| Letter Tracking | Navigation mapped, screens pending |
-| Settings | Navigation mapped, screens pending |
-| User Management | Navigation mapped, screens pending |
+Every entry in the navigation registry has a real screen — 104 of 104.
+
+| Module | Screens | Highlights |
+| --- | --- | --- |
+| Dashboard | 3 | Executive summary, fund utilisation, activity feed |
+| Project | 2 (+ detail route) | Portfolio, project detail tabs, organization letterhead |
+| Budget | 26 | DPP/RDPP setup, yearly and code-wise views, tranche allocation and mapping, expenditure entry, variance and IMED reports |
+| Accounting | 21 | Chart of accounts tree, debit/credit/journal vouchers, registers, trial balance, SOE, FAPAD, financial statement |
+| Payroll | 20 | Salary structures, contracts, adjustments, run processing, challans, eight statements |
+| HR Management | 4 | Employees, designations and groups |
+| Asset Management | 7 | Suppliers, categories, locations, challans, assignment, transfer, fixed asset register |
+| Consumer Item | 6 | Item master, receive/issue that move stock, register and stock position |
+| Letter Tracking | 6 | Dashboard, register, entry, dispatch, memos, movement history |
+| Settings | 13 | Agencies, funds, ministries, banks, currencies, signatures |
+| User Management | 3 | Users, roles, screen-level permission matrix |
+
+## Conventions
+
+- **Dummy data** lives in `src/features/<module>/data/` and is deterministic — generated
+  from index arithmetic so every reload shows the same records.
+- **Stores** seed from that data and support create/update so the prototype feels live.
+  Nothing persists across a hard reload except UI preferences, auth and scope.
+- **Zustand selectors** must return stable references. Derived arrays and lookup maps go
+  through `useMemo` (see `useEmployeeLookup`, `useRunLines`) rather than being computed
+  inside the selector.
+- **Reports** use `ReportShell` for the letterhead, filters and print/export actions.
+  Print CSS hides the shell so a report prints as a document.
+- **Reference-data screens** use `MasterPage` — pass columns, a field spec and an
+  `onCreate` handler.

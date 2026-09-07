@@ -1,0 +1,13 @@
+export type ImplementingAgency = { id: string; code: string; name: string; type: string; head: string; address: string }
+export type FundingAgency = { id: string; code: string; name: string; country: string; type: 'Multilateral' | 'Bilateral' | 'Government' | 'Own' }
+export type FundSource = { id: string; code: string; name: string; fundingAgencyId: string; category: string; currency: string }
+export type FundCategory = { id: string; code: string; name: string; description: string }
+export type ProjectType = { id: string; code: string; name: string; description: string }
+export type ProjectSector = { id: string; code: string; name: string; description: string }
+export type Ministry = { id: string; code: string; name: string; secretary: string }
+export type MinistryDirectorate = { id: string; code: string; name: string; ministryId: string; head: string }
+export type Currency = { id: string; code: string; name: string; symbol: string; rateToBdt: number }
+export type Bank = { id: string; code: string; name: string; type: 'State-owned' | 'Private' | 'Foreign' | 'Specialised' }
+export type BankBranch = { id: string; bankId: string; name: string; routingNo: string; district: string }
+export type SignatureSetup = { id: string; name: string; designation: string; purpose: string; order: number; active: boolean }
+export type AssociationGroup = { id: string; name: string; sector: string; focalPerson: string; memberInstitutes: number }

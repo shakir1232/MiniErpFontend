@@ -1,6 +1,8 @@
 import { fiscalYears } from '@/config/fiscal'
 import type {
   AdbGroup,
+  AdbGroupCategory,
+  TrancheMapping,
   BudgetItem,
   ContractImplementation,
   ExpenditureEntry,
@@ -191,3 +193,25 @@ export const contractImplementations: ContractImplementation[] = [
   { id: 'ci-04', packageNo: 'SEIP/S-04/2026', description: 'M&E and tracer study consultancy firm', method: 'QCBS', contractValue: 3_60_00_000, contractor: 'Development Insight Ltd.', signedOn: '2026-06-20', completionDate: '2027-06-30', physicalProgress: 18, financialProgress: 15, status: 'ongoing' },
   { id: 'ci-05', packageNo: 'SEIP/G-05/2026', description: 'Supply of training equipment for leather sector', method: 'OTM', contractValue: 4_20_00_000, contractor: '—', signedOn: '—', completionDate: '2027-03-31', physicalProgress: 0, financialProgress: 0, status: 'tendering' },
 ]
+
+export const adbGroupCategories: AdbGroupCategory[] = [
+  { id: 'agc-01', code: 'CAP', name: 'Capital Expenditure', description: 'Civil works, equipment and vehicles', reportingOrder: 1 },
+  { id: 'agc-02', code: 'REV', name: 'Recurrent Expenditure', description: 'Salaries, operating cost and consumables', reportingOrder: 2 },
+  { id: 'agc-03', code: 'TRN', name: 'Training & Grant', description: 'Training grants, stipends and certification', reportingOrder: 3 },
+  { id: 'agc-04', code: 'CON', name: 'Consulting Services', description: 'Firm and individual consultancy', reportingOrder: 4 },
+  { id: 'agc-05', code: 'CTG', name: 'Contingency', description: 'Physical and price contingency', reportingOrder: 5 },
+]
+
+export const trancheMappings: TrancheMapping[] = tranches.flatMap((tranche, ti) =>
+  adbGroups.slice(0, 4).map((group, gi) => {
+    const ceiling = Math.round(tranche.allocated * [0.12, 0.18, 0.5, 0.2][gi])
+    return {
+      id: `tm-${tranche.id}-${group.id}`,
+      trancheId: tranche.id,
+      adbGroupId: group.id,
+      ceilingAmount: ceiling,
+      claimedAmount: tranche.status === 'pending' ? 0 : Math.round(ceiling * (0.7 + ((ti * 7 + gi * 3) % 28) / 100)),
+      remarks: tranche.status === 'pending' ? 'Awaiting first withdrawal application' : '',
+    }
+  }),
+)

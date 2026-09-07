@@ -99,3 +99,20 @@ export type ContractImplementation = {
   financialProgress: number
   status: 'ongoing' | 'completed' | 'tendering'
 }
+
+export type TrancheMapping = {
+  id: string
+  trancheId: string
+  adbGroupId: string
+  ceilingAmount: number
+  claimedAmount: number
+  remarks: string
+}
+
+export type AdbGroupCategory = {
+  id: string
+  code: string
+  name: string
+  description: string
+  reportingOrder: number
+}
