@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import type { ColumnDef } from '@tanstack/react-table'
 import { ArrowLeft, Building2, Landmark, Users } from 'lucide-react'
@@ -21,10 +22,15 @@ export function ProjectDetailPage() {
   const { projectId } = useParams()
   const navigate = useNavigate()
   const project = useProjectStore((s) => s.projects.find((p) => p.id === projectId))
-  const directors = useProjectStore((s) => s.directors.filter((d) => d.projectId === projectId))
-  const accounts = useProjectStore((s) => s.bankAccounts.filter((a) => a.projectId === projectId))
-  const sources = useProjectStore((s) => s.sourcesOfFund.filter((f) => f.projectId === projectId))
-  const agencies = useProjectStore((s) => s.agencies.filter((a) => a.projectId === projectId))
+  const allDirectors = useProjectStore((s) => s.directors)
+  const allAccounts = useProjectStore((s) => s.bankAccounts)
+  const allSources = useProjectStore((s) => s.sourcesOfFund)
+  const allAgencies = useProjectStore((s) => s.agencies)
+
+  const directors = useMemo(() => allDirectors.filter((d) => d.projectId === projectId), [allDirectors, projectId])
+  const accounts = useMemo(() => allAccounts.filter((a) => a.projectId === projectId), [allAccounts, projectId])
+  const sources = useMemo(() => allSources.filter((f) => f.projectId === projectId), [allSources, projectId])
+  const agencies = useMemo(() => allAgencies.filter((a) => a.projectId === projectId), [allAgencies, projectId])
 
   if (!project) {
     return (
