@@ -11,10 +11,49 @@ import { formatCurrency, formatDate, formatNumber } from '@/lib/format'
 import { closingStock, useItemCategoryLookup, useItemLookup, useStoreStore } from '../store'
 import type { ItemCategory, ItemIssue, ItemReceive, StoreItem } from '../types'
 
+const toCategory = (v: Record<string, string>) => ({
+  code: v.code,
+  name: v.name,
+  description: v.description,
+})
+
+const toItem = (v: Record<string, string>) => ({
+  code: v.code,
+  name: v.name,
+  categoryId: v.categoryId,
+  unit: v.unit,
+  reorderLevel: Number(v.reorderLevel) || 0,
+  unitPrice: Number(v.unitPrice) || 0,
+  openingStock: Number(v.openingStock) || 0,
+})
+
+const toReceive = (v: Record<string, string>) => ({
+  grn: v.grn,
+  date: v.date,
+  supplier: v.supplier,
+  challanNo: v.challanNo || '—',
+  itemId: v.itemId,
+  quantity: Number(v.quantity) || 0,
+  unitPrice: Number(v.unitPrice) || 0,
+  remarks: v.remarks,
+})
+
+const toIssue = (v: Record<string, string>) => ({
+  issueNo: v.issueNo,
+  date: v.date,
+  itemId: v.itemId,
+  quantity: Number(v.quantity) || 0,
+  issuedTo: v.issuedTo,
+  department: v.department || '—',
+  purpose: v.purpose,
+})
+
 export function ItemCategoriesPage() {
   const categories = useStoreStore((s) => s.categories)
   const items = useStoreStore((s) => s.items)
   const addCategory = useStoreStore((s) => s.addCategory)
+  const updateCategory = useStoreStore((s) => s.updateCategory)
+  const removeCategory = useStoreStore((s) => s.removeCategory)
 
   const columns = useMemo<ColumnDef<ItemCategory, any>[]>(
     () => [
@@ -54,7 +93,9 @@ export function ItemCategoriesPage() {
         { name: 'name', label: 'Category name', required: true },
         { name: 'description', label: 'Description', type: 'textarea', span: true },
       ]}
-      onCreate={(v) => addCategory({ code: v.code, name: v.name, description: v.description })}
+      onCreate={(v) => addCategory(toCategory(v))}
+      onUpdate={(row, v) => updateCategory(row.id, toCategory(v))}
+      onDelete={(row) => removeCategory(row.id)}
     />
   )
 }
@@ -63,6 +104,8 @@ export function StoreItemsPage() {
   const items = useStoreStore((s) => s.items)
   const categories = useStoreStore((s) => s.categories)
   const addItem = useStoreStore((s) => s.addItem)
+  const updateItem = useStoreStore((s) => s.updateItem)
+  const removeItem = useStoreStore((s) => s.removeItem)
   const categoryById = useItemCategoryLookup()
 
   const stats = useMemo(() => {
@@ -149,19 +192,9 @@ export function StoreItemsPage() {
         { name: 'openingStock', label: 'Opening stock', type: 'number' },
         { name: 'reorderLevel', label: 'Reorder level', type: 'number' },
       ]}
-      onCreate={(v) =>
-        addItem({
-          code: v.code,
-          name: v.name,
-          categoryId: v.categoryId,
-          unit: v.unit,
-          reorderLevel: Number(v.reorderLevel) || 0,
-          unitPrice: Number(v.unitPrice) || 0,
-          openingStock: Number(v.openingStock) || 0,
-          received: 0,
-          issued: 0,
-        })
-      }
+      onCreate={(v) => addItem({ ...toItem(v), received: 0, issued: 0 })}
+      onUpdate={(row, v) => updateItem(row.id, toItem(v))}
+      onDelete={(row) => removeItem(row.id)}
     />
   )
 }
@@ -170,6 +203,8 @@ export function ItemReceivesPage() {
   const receives = useStoreStore((s) => s.receives)
   const items = useStoreStore((s) => s.items)
   const addReceive = useStoreStore((s) => s.addReceive)
+  const updateReceive = useStoreStore((s) => s.updateReceive)
+  const removeReceive = useStoreStore((s) => s.removeReceive)
   const itemById = useItemLookup()
 
   const columns = useMemo<ColumnDef<ItemReceive, any>[]>(
@@ -237,19 +272,10 @@ export function ItemReceivesPage() {
         { name: 'unitPrice', label: 'Unit price (BDT)', type: 'number', required: true },
         { name: 'remarks', label: 'Remarks', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addReceive({
-          grn: v.grn,
-          date: v.date,
-          supplier: v.supplier,
-          challanNo: v.challanNo || '—',
-          itemId: v.itemId,
-          quantity: Number(v.quantity) || 0,
-          unitPrice: Number(v.unitPrice) || 0,
-          receivedBy: 'Sabbir Ahmed',
-          remarks: v.remarks,
-        })
-      }
+      onCreate={(v) => addReceive({ ...toReceive(v), receivedBy: 'Sabbir Ahmed' })}
+      onUpdate={(row, v) => updateReceive(row.id, toReceive(v))}
+      onDelete={(row) => removeReceive(row.id)}
+      rowLabel={(row) => row.grn}
     />
   )
 }
@@ -258,6 +284,8 @@ export function ItemIssuesPage() {
   const issues = useStoreStore((s) => s.issues)
   const items = useStoreStore((s) => s.items)
   const addIssue = useStoreStore((s) => s.addIssue)
+  const updateIssue = useStoreStore((s) => s.updateIssue)
+  const removeIssue = useStoreStore((s) => s.removeIssue)
   const itemById = useItemLookup()
 
   const columns = useMemo<ColumnDef<ItemIssue, any>[]>(
@@ -325,18 +353,10 @@ export function ItemIssuesPage() {
         { name: 'department', label: 'Department' },
         { name: 'purpose', label: 'Purpose', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addIssue({
-          issueNo: v.issueNo,
-          date: v.date,
-          itemId: v.itemId,
-          quantity: Number(v.quantity) || 0,
-          issuedTo: v.issuedTo,
-          department: v.department || '—',
-          purpose: v.purpose,
-          approvedBy: 'Md. Rakibul Islam',
-        })
-      }
+      onCreate={(v) => addIssue({ ...toIssue(v), approvedBy: 'Md. Rakibul Islam' })}
+      onUpdate={(row, v) => updateIssue(row.id, toIssue(v))}
+      onDelete={(row) => removeIssue(row.id)}
+      rowLabel={(row) => row.issueNo}
     />
   )
 }

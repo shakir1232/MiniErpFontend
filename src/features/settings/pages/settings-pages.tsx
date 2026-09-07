@@ -43,6 +43,8 @@ function codeNameColumns<T extends { code: string; name: string; description?: s
 export function ImplementingAgenciesPage() {
   const rows = useSettingsStore((s) => s.implementingAgencies)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
 
   const columns: ColumnDef<ImplementingAgency, any>[] = [
     { accessorKey: 'code', header: 'Code', meta: { label: 'Code', className: 'font-mono text-xs' } },
@@ -77,6 +79,8 @@ export function ImplementingAgenciesPage() {
         { name: 'address', label: 'Address', type: 'textarea', span: true },
       ]}
       onCreate={(v) => add('implementingAgencies', v as any)}
+      onUpdate={(row, v) => update('implementingAgencies', row.id, v as any)}
+      onDelete={(row) => remove('implementingAgencies', row.id)}
     />
   )
 }
@@ -84,6 +88,8 @@ export function ImplementingAgenciesPage() {
 export function FundingAgenciesPage() {
   const rows = useSettingsStore((s) => s.fundingAgencies)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
 
   const columns: ColumnDef<FundingAgency, any>[] = [
     { accessorKey: 'code', header: 'Code', meta: { label: 'Code', className: 'font-mono text-xs' } },
@@ -123,6 +129,8 @@ export function FundingAgenciesPage() {
         },
       ]}
       onCreate={(v) => add('fundingAgencies', v as any)}
+      onUpdate={(row, v) => update('fundingAgencies', row.id, v as any)}
+      onDelete={(row) => remove('fundingAgencies', row.id)}
     />
   )
 }
@@ -133,6 +141,8 @@ export function FundSourcesPage() {
   const currencies = useSettingsStore((s) => s.currencies)
   const categories = useSettingsStore((s) => s.fundCategories)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
   const agencyById = useLookup(agencies)
 
   const columns: ColumnDef<FundSource, any>[] = [
@@ -186,6 +196,8 @@ export function FundSourcesPage() {
         },
       ]}
       onCreate={(v) => add('fundSources', v as any)}
+      onUpdate={(row, v) => update('fundSources', row.id, v as any)}
+      onDelete={(row) => remove('fundSources', row.id)}
     />
   )
 }
@@ -193,6 +205,8 @@ export function FundSourcesPage() {
 export function FundCategoriesPage() {
   const rows = useSettingsStore((s) => s.fundCategories)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
 
   return (
     <MasterPage
@@ -208,6 +222,8 @@ export function FundCategoriesPage() {
         { name: 'description', label: 'Description', type: 'textarea', span: true },
       ]}
       onCreate={(v) => add('fundCategories', v as any)}
+      onUpdate={(row, v) => update('fundCategories', row.id, v as any)}
+      onDelete={(row) => remove('fundCategories', row.id)}
     />
   )
 }
@@ -215,6 +231,8 @@ export function FundCategoriesPage() {
 export function ProjectTypesPage() {
   const rows = useSettingsStore((s) => s.projectTypes)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
 
   return (
     <MasterPage
@@ -230,6 +248,8 @@ export function ProjectTypesPage() {
         { name: 'description', label: 'Description', type: 'textarea', span: true },
       ]}
       onCreate={(v) => add('projectTypes', v as any)}
+      onUpdate={(row, v) => update('projectTypes', row.id, v as any)}
+      onDelete={(row) => remove('projectTypes', row.id)}
     />
   )
 }
@@ -237,6 +257,8 @@ export function ProjectTypesPage() {
 export function ProjectSectorsPage() {
   const rows = useSettingsStore((s) => s.projectSectors)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
 
   return (
     <MasterPage
@@ -252,6 +274,8 @@ export function ProjectSectorsPage() {
         { name: 'description', label: 'Description', type: 'textarea', span: true },
       ]}
       onCreate={(v) => add('projectSectors', v as any)}
+      onUpdate={(row, v) => update('projectSectors', row.id, v as any)}
+      onDelete={(row) => remove('projectSectors', row.id)}
     />
   )
 }
@@ -260,6 +284,8 @@ export function MinistriesPage() {
   const rows = useSettingsStore((s) => s.ministries)
   const directorates = useSettingsStore((s) => s.ministryDirectorates)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
 
   const columns = useMemo<ColumnDef<Ministry, any>[]>(
     () => [
@@ -295,6 +321,8 @@ export function MinistriesPage() {
         { name: 'secretary', label: 'Administrative head', span: true },
       ]}
       onCreate={(v) => add('ministries', v as any)}
+      onUpdate={(row, v) => update('ministries', row.id, v as any)}
+      onDelete={(row) => remove('ministries', row.id)}
     />
   )
 }
@@ -303,6 +331,8 @@ export function MinistryDirectoratesPage() {
   const rows = useSettingsStore((s) => s.ministryDirectorates)
   const ministries = useSettingsStore((s) => s.ministries)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
   const ministryById = useLookup(ministries)
 
   const columns: ColumnDef<MinistryDirectorate, any>[] = [
@@ -343,6 +373,8 @@ export function MinistryDirectoratesPage() {
         { name: 'head', label: 'Head' },
       ]}
       onCreate={(v) => add('ministryDirectorates', v as any)}
+      onUpdate={(row, v) => update('ministryDirectorates', row.id, v as any)}
+      onDelete={(row) => remove('ministryDirectorates', row.id)}
     />
   )
 }
@@ -350,6 +382,8 @@ export function MinistryDirectoratesPage() {
 export function CurrenciesPage() {
   const rows = useSettingsStore((s) => s.currencies)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
 
   const columns: ColumnDef<Currency, any>[] = [
     { accessorKey: 'code', header: 'Code', meta: { label: 'Code', className: 'font-mono text-xs' } },
@@ -383,6 +417,8 @@ export function CurrenciesPage() {
         { name: 'rateToBdt', label: 'Rate to BDT', type: 'number', required: true },
       ]}
       onCreate={(v) => add('currencies', { ...v, rateToBdt: Number(v.rateToBdt) || 1 } as any)}
+      onUpdate={(row, v) => update('currencies', row.id, { ...v, rateToBdt: Number(v.rateToBdt) || 1 } as any)}
+      onDelete={(row) => remove('currencies', row.id)}
     />
   )
 }
@@ -391,6 +427,8 @@ export function BanksPage() {
   const rows = useSettingsStore((s) => s.banks)
   const branches = useSettingsStore((s) => s.bankBranches)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
 
   const columns = useMemo<ColumnDef<Bank, any>[]>(
     () => [
@@ -437,6 +475,8 @@ export function BanksPage() {
         },
       ]}
       onCreate={(v) => add('banks', v as any)}
+      onUpdate={(row, v) => update('banks', row.id, v as any)}
+      onDelete={(row) => remove('banks', row.id)}
     />
   )
 }
@@ -445,6 +485,8 @@ export function BankBranchesPage() {
   const rows = useSettingsStore((s) => s.bankBranches)
   const banks = useSettingsStore((s) => s.banks)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
   const bankById = useLookup(banks)
 
   const columns: ColumnDef<BankBranch, any>[] = [
@@ -487,6 +529,8 @@ export function BankBranchesPage() {
         { name: 'district', label: 'District' },
       ]}
       onCreate={(v) => add('bankBranches', v as any)}
+      onUpdate={(row, v) => update('bankBranches', row.id, v as any)}
+      onDelete={(row) => remove('bankBranches', row.id)}
     />
   )
 }
@@ -494,6 +538,8 @@ export function BankBranchesPage() {
 export function SignaturesPage() {
   const rows = useSettingsStore((s) => s.signatures)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
 
   const columns: ColumnDef<SignatureSetup, any>[] = [
     {
@@ -533,6 +579,8 @@ export function SignaturesPage() {
         { name: 'order', label: 'Print order', type: 'number' },
       ]}
       onCreate={(v) => add('signatures', { ...v, order: Number(v.order) || 99, active: true } as any)}
+      onUpdate={(row, v) => update('signatures', row.id, { ...v, order: Number(v.order) || 99 } as any)}
+      onDelete={(row) => remove('signatures', row.id)}
     />
   )
 }
@@ -540,6 +588,8 @@ export function SignaturesPage() {
 export function AssociationGroupsPage() {
   const rows = useSettingsStore((s) => s.associationGroups)
   const add = useSettingsStore((s) => s.add)
+  const update = useSettingsStore((s) => s.update)
+  const remove = useSettingsStore((s) => s.remove)
 
   const columns: ColumnDef<AssociationGroup, any>[] = [
     {
@@ -573,6 +623,10 @@ export function AssociationGroupsPage() {
         { name: 'memberInstitutes', label: 'Member institutes', type: 'number' },
       ]}
       onCreate={(v) => add('associationGroups', { ...v, memberInstitutes: Number(v.memberInstitutes) || 0 } as any)}
+      onUpdate={(row, v) =>
+        update('associationGroups', row.id, { ...v, memberInstitutes: Number(v.memberInstitutes) || 0 } as any)
+      }
+      onDelete={(row) => remove('associationGroups', row.id)}
     />
   )
 }

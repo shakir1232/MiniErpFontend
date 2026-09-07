@@ -13,10 +13,20 @@ import type { SalaryAdjustment } from '../types'
 
 const TYPES: SalaryAdjustment['type'][] = ['Arrear', 'Deduction', 'Bonus', 'Leave without pay']
 
+const toRecord = (v: Record<string, string>) => ({
+  employeeId: v.employeeId,
+  month: v.month,
+  type: v.type as SalaryAdjustment['type'],
+  amount: Number(v.amount) || 0,
+  remarks: v.remarks,
+})
+
 export function AdjustmentsPage() {
   const adjustments = usePayrollStore((s) => s.adjustments)
   const addAdjustment = usePayrollStore((s) => s.addAdjustment)
   const approveAdjustment = usePayrollStore((s) => s.approveAdjustment)
+  const updateAdjustment = usePayrollStore((s) => s.updateAdjustment)
+  const removeAdjustment = usePayrollStore((s) => s.removeAdjustment)
   const employees = useHrStore((s) => s.employees)
   const employeeById = useEmployeeLookup()
 
@@ -124,16 +134,10 @@ export function AdjustmentsPage() {
         { name: 'amount', label: 'Amount (BDT)', type: 'number', required: true },
         { name: 'remarks', label: 'Remarks', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addAdjustment({
-          employeeId: v.employeeId,
-          month: v.month,
-          type: v.type as SalaryAdjustment['type'],
-          amount: Number(v.amount) || 0,
-          remarks: v.remarks,
-          approved: false,
-        })
-      }
+      onCreate={(v) => addAdjustment({ ...toRecord(v), approved: false })}
+      onUpdate={(row, v) => updateAdjustment(row.id, toRecord(v))}
+      onDelete={(row) => removeAdjustment(row.id)}
+      rowLabel={(row) => `${row.type} adjustment`}
     />
   )
 }

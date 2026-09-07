@@ -9,10 +9,22 @@ import type { ExpenditureEntry } from '../types'
 
 const FUND_SOURCES = ['ADB Loan 3140-BAN', 'ADB Grant 0387-BAN', 'GoB Development Budget', 'SDC Grant TF-0912']
 
+const toRecord = (v: Record<string, string>): Omit<ExpenditureEntry, 'id'> => ({
+  date: v.date,
+  itemId: v.itemId,
+  fiscalYearId: v.fiscalYearId,
+  fundSource: v.fundSource,
+  amount: Number(v.amount) || 0,
+  voucherNo: v.voucherNo || '—',
+  remarks: v.remarks,
+})
+
 export function ExpenditureEntryPage() {
   const entries = useBudgetStore((s) => s.expenditure)
   const items = useBudgetStore((s) => s.items)
   const addExpenditure = useBudgetStore((s) => s.addExpenditure)
+  const updateExpenditure = useBudgetStore((s) => s.updateExpenditure)
+  const removeExpenditure = useBudgetStore((s) => s.removeExpenditure)
   const itemById = useBudgetItemLookup()
 
   const totals = useMemo(() => {
@@ -108,17 +120,10 @@ export function ExpenditureEntryPage() {
         { name: 'amount', label: 'Amount (BDT)', type: 'number', required: true },
         { name: 'remarks', label: 'Remarks', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addExpenditure({
-          date: v.date,
-          itemId: v.itemId,
-          fiscalYearId: v.fiscalYearId,
-          fundSource: v.fundSource,
-          amount: Number(v.amount) || 0,
-          voucherNo: v.voucherNo || '—',
-          remarks: v.remarks,
-        })
-      }
+      onCreate={(v) => addExpenditure(toRecord(v))}
+      onUpdate={(row, v) => updateExpenditure(row.id, toRecord(v))}
+      onDelete={(row) => removeExpenditure(row.id)}
+      rowLabel={(row) => row.voucherNo}
     />
   )
 }

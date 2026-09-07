@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { create } from 'zustand'
 import { uid } from '@/lib/id'
+import { dropById, patchById } from '@/lib/collection'
 import { designationGroups as seedGroups, designations as seedDesignations, employeeGroups as seedEmployeeGroups, employees as seedEmployees } from './data/hr'
 import type { Designation, DesignationGroup, Employee, EmployeeGroup } from './types'
 
@@ -15,12 +16,15 @@ type HrState = {
   removeEmployee: (id: string) => void
 
   addDesignation: (designation: Omit<Designation, 'id'>) => void
+  updateDesignation: (id: string, patch: Partial<Designation>) => void
   removeDesignation: (id: string) => void
 
   addDesignationGroup: (group: Omit<DesignationGroup, 'id'>) => void
+  updateDesignationGroup: (id: string, patch: Partial<DesignationGroup>) => void
   removeDesignationGroup: (id: string) => void
 
   addEmployeeGroup: (group: Omit<EmployeeGroup, 'id'>) => void
+  updateEmployeeGroup: (id: string, patch: Partial<EmployeeGroup>) => void
   removeEmployeeGroup: (id: string) => void
 }
 
@@ -40,13 +44,16 @@ export const useHrStore = create<HrState>()((set) => ({
   removeEmployee: (id) => set((s) => ({ employees: s.employees.filter((e) => e.id !== id) })),
 
   addDesignation: (designation) => set((s) => ({ designations: [{ ...designation, id: uid('des') }, ...s.designations] })),
-  removeDesignation: (id) => set((s) => ({ designations: s.designations.filter((d) => d.id !== id) })),
+  updateDesignation: (id, patch) => set((s) => ({ designations: patchById(s.designations, id, patch) })),
+  removeDesignation: (id) => set((s) => ({ designations: dropById(s.designations, id) })),
 
   addDesignationGroup: (group) => set((s) => ({ designationGroups: [{ ...group, id: uid('dg') }, ...s.designationGroups] })),
-  removeDesignationGroup: (id) => set((s) => ({ designationGroups: s.designationGroups.filter((g) => g.id !== id) })),
+  updateDesignationGroup: (id, patch) => set((s) => ({ designationGroups: patchById(s.designationGroups, id, patch) })),
+  removeDesignationGroup: (id) => set((s) => ({ designationGroups: dropById(s.designationGroups, id) })),
 
   addEmployeeGroup: (group) => set((s) => ({ employeeGroups: [{ ...group, id: uid('eg') }, ...s.employeeGroups] })),
-  removeEmployeeGroup: (id) => set((s) => ({ employeeGroups: s.employeeGroups.filter((g) => g.id !== id) })),
+  updateEmployeeGroup: (id, patch) => set((s) => ({ employeeGroups: patchById(s.employeeGroups, id, patch) })),
+  removeEmployeeGroup: (id) => set((s) => ({ employeeGroups: dropById(s.employeeGroups, id) })),
 }))
 
 /**

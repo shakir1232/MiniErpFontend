@@ -8,9 +8,40 @@ import { formatCurrency, formatDate, formatNumber, formatPercent } from '@/lib/f
 import { useAccountingStore } from '../store'
 import type { AdviceRegisterEntry, AdvanceRegisterEntry, ChequeRegisterEntry } from '../types'
 
+const toCheque = (v: Record<string, string>) => ({
+  chequeNo: v.chequeNo,
+  date: v.date,
+  bank: v.bank,
+  accountNo: v.accountNo,
+  payee: v.payee,
+  purpose: v.purpose,
+  amount: Number(v.amount) || 0,
+  voucherNo: v.voucherNo || '—',
+})
+
+const toAdvice = (v: Record<string, string>) => ({
+  adviceNo: v.adviceNo,
+  date: v.date,
+  bank: v.bank,
+  beneficiaryCount: Number(v.beneficiaryCount) || 0,
+  purpose: v.purpose,
+  amount: Number(v.amount) || 0,
+  fundSource: v.fundSource,
+})
+
+const toAdvance2 = (v: Record<string, string>) => ({
+  date: v.date,
+  party: v.party,
+  purpose: v.purpose,
+  advanceAmount: Number(v.advanceAmount) || 0,
+  voucherNo: v.voucherNo || '—',
+})
+
 export function ChequeRegisterPage() {
   const cheques = useAccountingStore((s) => s.cheques)
   const addCheque = useAccountingStore((s) => s.addCheque)
+  const updateCheque = useAccountingStore((s) => s.updateCheque)
+  const removeCheque = useAccountingStore((s) => s.removeCheque)
 
   const stats = useMemo(
     () => ({
@@ -81,19 +112,10 @@ export function ChequeRegisterPage() {
         { name: 'voucherNo', label: 'Voucher number' },
         { name: 'amount', label: 'Amount (BDT)', type: 'number', required: true },
       ]}
-      onCreate={(v) =>
-        addCheque({
-          chequeNo: v.chequeNo,
-          date: v.date,
-          bank: v.bank,
-          accountNo: v.accountNo,
-          payee: v.payee,
-          purpose: v.purpose,
-          amount: Number(v.amount) || 0,
-          voucherNo: v.voucherNo || '—',
-          status: 'issued',
-        })
-      }
+      onCreate={(v) => addCheque({ ...toCheque(v), status: 'issued' })}
+      onUpdate={(row, v) => updateCheque(row.id, toCheque(v))}
+      onDelete={(row) => removeCheque(row.id)}
+      rowLabel={(row) => row.chequeNo}
     />
   )
 }
@@ -101,6 +123,8 @@ export function ChequeRegisterPage() {
 export function AdviceRegisterPage() {
   const advices = useAccountingStore((s) => s.advices)
   const addAdvice = useAccountingStore((s) => s.addAdvice)
+  const updateAdvice = useAccountingStore((s) => s.updateAdvice)
+  const removeAdvice = useAccountingStore((s) => s.removeAdvice)
 
   const columns = useMemo<ColumnDef<AdviceRegisterEntry, any>[]>(
     () => [
@@ -165,18 +189,10 @@ export function AdviceRegisterPage() {
         { name: 'beneficiaryCount', label: 'Beneficiary count', type: 'number' },
         { name: 'amount', label: 'Amount (BDT)', type: 'number', required: true },
       ]}
-      onCreate={(v) =>
-        addAdvice({
-          adviceNo: v.adviceNo,
-          date: v.date,
-          bank: v.bank,
-          beneficiaryCount: Number(v.beneficiaryCount) || 0,
-          purpose: v.purpose,
-          amount: Number(v.amount) || 0,
-          fundSource: v.fundSource,
-          status: 'draft',
-        })
-      }
+      onCreate={(v) => addAdvice({ ...toAdvice(v), status: 'draft' })}
+      onUpdate={(row, v) => updateAdvice(row.id, toAdvice(v))}
+      onDelete={(row) => removeAdvice(row.id)}
+      rowLabel={(row) => row.adviceNo}
     />
   )
 }
@@ -184,6 +200,8 @@ export function AdviceRegisterPage() {
 export function AdvanceRegisterPage() {
   const advances = useAccountingStore((s) => s.advances)
   const addAdvance = useAccountingStore((s) => s.addAdvance)
+  const updateAdvance = useAccountingStore((s) => s.updateAdvance)
+  const removeAdvance = useAccountingStore((s) => s.removeAdvance)
 
   const stats = useMemo(() => {
     const total = advances.reduce((s, a) => s + a.advanceAmount, 0)
@@ -275,17 +293,10 @@ export function AdvanceRegisterPage() {
         { name: 'voucherNo', label: 'Voucher number' },
         { name: 'advanceAmount', label: 'Advance amount (BDT)', type: 'number', required: true },
       ]}
-      onCreate={(v) =>
-        addAdvance({
-          date: v.date,
-          party: v.party,
-          purpose: v.purpose,
-          advanceAmount: Number(v.advanceAmount) || 0,
-          adjustedAmount: 0,
-          voucherNo: v.voucherNo || '—',
-          status: 'pending',
-        })
-      }
+      onCreate={(v) => addAdvance({ ...toAdvance2(v), adjustedAmount: 0, status: 'pending' })}
+      onUpdate={(row, v) => updateAdvance(row.id, toAdvance2(v))}
+      onDelete={(row) => removeAdvance(row.id)}
+      rowLabel={(row) => `${row.party} advance`}
     />
   )
 }

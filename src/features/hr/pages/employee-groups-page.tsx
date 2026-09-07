@@ -6,10 +6,20 @@ import { useHrStore } from '../store'
 import { useProjectStore } from '@/features/projects/store'
 import type { EmployeeGroup } from '../types'
 
+const toRecord = (v: Record<string, string>): Omit<EmployeeGroup, 'id'> => ({
+  name: v.name,
+  code: v.code,
+  projectId: v.projectId,
+  headcount: Number(v.headcount) || 0,
+  description: v.description,
+})
+
 export function EmployeeGroupsPage() {
   const groups = useHrStore((s) => s.employeeGroups)
   const employees = useHrStore((s) => s.employees)
   const addGroup = useHrStore((s) => s.addEmployeeGroup)
+  const updateGroup = useHrStore((s) => s.updateEmployeeGroup)
+  const removeGroup = useHrStore((s) => s.removeEmployeeGroup)
   const projects = useProjectStore((s) => s.projects)
 
   const projectById = useMemo(() => Object.fromEntries(projects.map((p) => [p.id, p])), [projects])
@@ -76,15 +86,9 @@ export function EmployeeGroupsPage() {
         { name: 'headcount', label: 'Sanctioned headcount', type: 'number' },
         { name: 'description', label: 'Description', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addGroup({
-          name: v.name,
-          code: v.code,
-          projectId: v.projectId,
-          headcount: Number(v.headcount) || 0,
-          description: v.description,
-        })
-      }
+      onCreate={(v) => addGroup(toRecord(v))}
+      onUpdate={(row, v) => updateGroup(row.id, toRecord(v))}
+      onDelete={(row) => removeGroup(row.id)}
     />
   )
 }

@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import type { ColumnDef } from '@tanstack/react-table'
 import { ArrowDownLeft, ArrowUpRight, Inbox, Mail, Send } from 'lucide-react'
 import { toast } from 'sonner'
+import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { RowActions } from '@/components/common/row-actions'
 import { PageContainer } from '@/components/common/page-container'
 import { PageHeader } from '@/components/common/page-header'
 import { DataTable } from '@/components/common/data-table'
@@ -107,11 +109,53 @@ export function LetterDashboardPage() {
 
 export function LettersListPage() {
   const letters = useLetterStore((s) => s.letters)
+  const entities = useLetterStore((s) => s.entities)
   const setLetterStatus = useLetterStore((s) => s.setLetterStatus)
+  const updateLetter = useLetterStore((s) => s.updateLetter)
+  const removeLetter = useLetterStore((s) => s.removeLetter)
   const entityById = useEntityLookup()
   const [direction, setDirection] = useState<'all' | Letter['direction']>('all')
   const [selected, setSelected] = useState<Letter | null>(null)
+  const [editing, setEditing] = useState<Letter | null>(null)
+  const [deleting, setDeleting] = useState<Letter | null>(null)
+  const [editForm, setEditForm] = useState(emptyLetterForm)
   const movements = useMovementsOf(selected?.id)
+
+  const openEdit = (letter: Letter) => {
+    setEditing(letter)
+    setEditForm({
+      memoNo: letter.memoNo,
+      direction: letter.direction,
+      subject: letter.subject,
+      entityId: letter.entityId,
+      letterDate: letter.letterDate,
+      receivedDate: letter.receivedDate,
+      priority: letter.priority,
+      assignedTo: letter.assignedTo,
+      remarks: letter.remarks,
+    })
+  }
+
+  const saveEdit = () => {
+    if (!editing) return
+    if (!editForm.memoNo || !editForm.subject || !editForm.entityId || !editForm.letterDate) {
+      toast.error('Memo number, subject, entity and letter date are required.')
+      return
+    }
+    updateLetter(editing.id, {
+      memoNo: editForm.memoNo,
+      direction: editForm.direction,
+      subject: editForm.subject,
+      entityId: editForm.entityId,
+      letterDate: editForm.letterDate,
+      receivedDate: editForm.receivedDate || editForm.letterDate,
+      priority: editForm.priority,
+      assignedTo: editForm.assignedTo || 'Unassigned',
+      remarks: editForm.remarks,
+    })
+    toast.success(`${editForm.memoNo} updated.`)
+    setEditing(null)
+  }
 
   const rows = useMemo(
     () => (direction === 'all' ? letters : letters.filter((l) => l.direction === direction)),
@@ -161,6 +205,16 @@ export function LettersListPage() {
       header: 'Status',
       meta: { align: 'center', label: 'Status' },
       cell: ({ getValue }) => <StatusBadge status={getValue<string>()} />,
+    },
+    {
+      id: 'actions',
+      header: () => <span className="sr-only">Actions</span>,
+      enableSorting: false,
+      enableHiding: false,
+      meta: { align: 'right', label: 'Actions', pinMobile: true, className: 'w-px' },
+      cell: ({ row }) => (
+        <RowActions onEdit={() => openEdit(row.original)} onDelete={() => setDeleting(row.original)} />
+      ),
     },
   ]
 
@@ -249,6 +303,39 @@ export function LettersListPage() {
           </div>
         ) : null}
       </RecordSheet>
+
+      <RecordSheet
+        open={!!editing}
+        onOpenChange={(next) => !next && setEditing(null)}
+        title={editing ? `Edit ${editing.memoNo}` : ''}
+        description="Prototype only — records live in browser memory."
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setEditing(null)}>
+              Cancel
+            </Button>
+            <Button onClick={saveEdit}>Update letter</Button>
+          </>
+        }
+      >
+        <LetterFormFields entities={entities} value={editForm} onChange={setEditForm} />
+      </RecordSheet>
+
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(next) => !next && setDeleting(null)}
+        title={`Delete ${deleting?.memoNo ?? 'letter'}?`}
+        description="The letter and any dispatch record raised against it are removed from the prototype session."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deleting) {
+            removeLetter(deleting.id)
+            toast.success(`${deleting.memoNo} deleted.`)
+          }
+          setDeleting(null)
+        }}
+      />
     </PageContainer>
   )
 }
@@ -313,6 +400,26 @@ export function AddLetterPage() {
       />
 
       <SectionCard title="Letter details">
+        <LetterFormFields entities={entities} value={form} onChange={setForm} />
+      </SectionCard>
+    </PageContainer>
+  )
+}
+
+type LetterFormValue = typeof emptyLetterForm
+
+function LetterFormFields({
+  entities,
+  value,
+  onChange,
+}: {
+  entities: { id: string; name: string }[]
+  value: LetterFormValue
+  onChange: (next: LetterFormValue) => void
+}) {
+  const form = value
+  const setForm = onChange
+  return (
         <FormGrid>
           <FormField id="l-memo" label="Memo number" required>
             <Input id="l-memo" value={form.memoNo} onChange={(e) => setForm({ ...form, memoNo: e.target.value })} />
@@ -375,17 +482,34 @@ export function AddLetterPage() {
             <Textarea id="l-remarks" rows={3} value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} />
           </FormField>
         </FormGrid>
-      </SectionCard>
-    </PageContainer>
   )
 }
 
 /* ------------------------------------ Dispatch ------------------------------------ */
 
+const toDispatch = (v: Record<string, string>) => ({
+  letterId: v.letterId,
+  dispatchNo: v.dispatchNo,
+  dispatchDate: v.dispatchDate,
+  mode: v.mode as LetterDispatch['mode'],
+  receiverName: v.receiverName || '—',
+  trackingNo: v.trackingNo || '—',
+})
+
+const toMemo = (v: Record<string, string>) => ({
+  memoNo: v.memoNo,
+  subject: v.subject,
+  body: v.body,
+  preparedBy: v.preparedBy,
+  date: v.date,
+})
+
 export function DispatchPage() {
   const dispatches = useLetterStore((s) => s.dispatches)
   const letters = useLetterStore((s) => s.letters)
   const addDispatch = useLetterStore((s) => s.addDispatch)
+  const updateDispatch = useLetterStore((s) => s.updateDispatch)
+  const removeDispatch = useLetterStore((s) => s.removeDispatch)
   const letterById = useLetterLookup()
 
   const dispatchable = useMemo(
@@ -470,17 +594,10 @@ export function DispatchPage() {
         { name: 'receiverName', label: 'Receiver' },
         { name: 'trackingNo', label: 'Tracking number' },
       ]}
-      onCreate={(v) =>
-        addDispatch({
-          letterId: v.letterId,
-          dispatchNo: v.dispatchNo,
-          dispatchDate: v.dispatchDate,
-          mode: v.mode as LetterDispatch['mode'],
-          receiverName: v.receiverName || '—',
-          trackingNo: v.trackingNo || '—',
-          status: 'dispatched',
-        })
-      }
+      onCreate={(v) => addDispatch({ ...toDispatch(v), status: 'dispatched' })}
+      onUpdate={(row, v) => updateDispatch(row.id, toDispatch(v))}
+      onDelete={(row) => removeDispatch(row.id)}
+      rowLabel={(row) => row.dispatchNo}
     />
   )
 }
@@ -490,6 +607,8 @@ export function DispatchPage() {
 export function MemosPage() {
   const memos = useLetterStore((s) => s.memos)
   const addMemo = useLetterStore((s) => s.addMemo)
+  const updateMemo = useLetterStore((s) => s.updateMemo)
+  const removeMemo = useLetterStore((s) => s.removeMemo)
 
   const columns = useMemo<ColumnDef<Memo, any>[]>(
     () => [
@@ -533,17 +652,10 @@ export function MemosPage() {
         { name: 'body', label: 'Body', type: 'textarea', span: true },
         { name: 'preparedBy', label: 'Prepared by', required: true },
       ]}
-      onCreate={(v) =>
-        addMemo({
-          memoNo: v.memoNo,
-          subject: v.subject,
-          body: v.body,
-          preparedBy: v.preparedBy,
-          approvedBy: null,
-          date: v.date,
-          status: 'draft',
-        })
-      }
+      onCreate={(v) => addMemo({ ...toMemo(v), approvedBy: null, status: 'draft' })}
+      onUpdate={(row, v) => updateMemo(row.id, toMemo(v))}
+      onDelete={(row) => removeMemo(row.id)}
+      rowLabel={(row) => row.memoNo}
     />
   )
 }

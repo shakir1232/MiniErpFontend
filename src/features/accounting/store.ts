@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { create } from 'zustand'
 import { uid } from '@/lib/id'
+import { dropById, patchById } from '@/lib/collection'
 import {
   accountGroups as seedGroups,
   adviceRegister as seedAdvice,
@@ -28,12 +29,27 @@ type AccountingState = {
   advances: AdvanceRegisterEntry[]
 
   addLedger: (ledger: Omit<Ledger, 'id'>) => void
+  updateLedger: (id: string, patch: Partial<Ledger>) => void
+  removeLedger: (id: string) => void
+
   addGroup: (group: Omit<AccountGroup, 'id'>) => void
+
   addVoucher: (voucher: Omit<Voucher, 'id'>) => void
+  updateVoucher: (id: string, patch: Partial<Voucher>) => void
+  removeVoucher: (id: string) => void
   setVoucherStatus: (id: string, status: Voucher['status']) => void
+
   addCheque: (cheque: Omit<ChequeRegisterEntry, 'id'>) => void
+  updateCheque: (id: string, patch: Partial<ChequeRegisterEntry>) => void
+  removeCheque: (id: string) => void
+
   addAdvice: (advice: Omit<AdviceRegisterEntry, 'id'>) => void
+  updateAdvice: (id: string, patch: Partial<AdviceRegisterEntry>) => void
+  removeAdvice: (id: string) => void
+
   addAdvance: (advance: Omit<AdvanceRegisterEntry, 'id'>) => void
+  updateAdvance: (id: string, patch: Partial<AdvanceRegisterEntry>) => void
+  removeAdvance: (id: string) => void
 }
 
 export const useAccountingStore = create<AccountingState>()((set) => ({
@@ -45,8 +61,14 @@ export const useAccountingStore = create<AccountingState>()((set) => ({
   advances: seedAdvance,
 
   addLedger: (ledger) => set((s) => ({ ledgers: [{ ...ledger, id: uid('led') }, ...s.ledgers] })),
+  updateLedger: (id, patch) => set((s) => ({ ledgers: patchById(s.ledgers, id, patch) })),
+  removeLedger: (id) => set((s) => ({ ledgers: dropById(s.ledgers, id) })),
+
   addGroup: (group) => set((s) => ({ groups: [...s.groups, { ...group, id: uid('g') }] })),
+
   addVoucher: (voucher) => set((s) => ({ vouchers: [{ ...voucher, id: uid('vch') }, ...s.vouchers] })),
+  updateVoucher: (id, patch) => set((s) => ({ vouchers: patchById(s.vouchers, id, patch) })),
+  removeVoucher: (id) => set((s) => ({ vouchers: dropById(s.vouchers, id) })),
   setVoucherStatus: (id, status) =>
     set((s) => ({
       vouchers: s.vouchers.map((v) =>
@@ -54,8 +76,16 @@ export const useAccountingStore = create<AccountingState>()((set) => ({
       ),
     })),
   addCheque: (cheque) => set((s) => ({ cheques: [{ ...cheque, id: uid('chq') }, ...s.cheques] })),
+  updateCheque: (id, patch) => set((s) => ({ cheques: patchById(s.cheques, id, patch) })),
+  removeCheque: (id) => set((s) => ({ cheques: dropById(s.cheques, id) })),
+
   addAdvice: (advice) => set((s) => ({ advices: [{ ...advice, id: uid('adv') }, ...s.advices] })),
+  updateAdvice: (id, patch) => set((s) => ({ advices: patchById(s.advices, id, patch) })),
+  removeAdvice: (id) => set((s) => ({ advices: dropById(s.advices, id) })),
+
   addAdvance: (advance) => set((s) => ({ advances: [{ ...advance, id: uid('advr') }, ...s.advances] })),
+  updateAdvance: (id, patch) => set((s) => ({ advances: patchById(s.advances, id, patch) })),
+  removeAdvance: (id) => set((s) => ({ advances: dropById(s.advances, id) })),
 }))
 
 export function useVouchersOfType(type: VoucherType) {

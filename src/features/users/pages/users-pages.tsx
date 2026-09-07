@@ -17,10 +17,27 @@ import { formatDateTime, formatNumber } from '@/lib/format'
 import { useRoleLookup, useUserStore } from '../store'
 import type { AppRole, AppUser } from '../types'
 
+const toUser = (v: Record<string, string>) => ({
+  username: v.username,
+  fullName: v.fullName,
+  email: v.email,
+  designation: v.designation || '—',
+  roleId: v.roleId,
+  employeeCode: v.employeeCode || '—',
+})
+
+const toRole = (v: Record<string, string>) => ({
+  code: v.code,
+  name: v.name,
+  description: v.description,
+})
+
 export function UsersPage() {
   const users = useUserStore((s) => s.users)
   const roles = useUserStore((s) => s.roles)
   const addUser = useUserStore((s) => s.addUser)
+  const updateUser = useUserStore((s) => s.updateUser)
+  const removeUser = useUserStore((s) => s.removeUser)
   const roleById = useRoleLookup()
 
   const stats = useMemo(
@@ -107,18 +124,10 @@ export function UsersPage() {
           options: roles.map((r) => ({ value: r.id, label: r.name })),
         },
       ]}
-      onCreate={(v) =>
-        addUser({
-          username: v.username,
-          fullName: v.fullName,
-          email: v.email,
-          designation: v.designation || '—',
-          roleId: v.roleId,
-          employeeCode: v.employeeCode || '—',
-          lastLogin: new Date().toISOString(),
-          status: 'active',
-        })
-      }
+      onCreate={(v) => addUser({ ...toUser(v), lastLogin: new Date().toISOString(), status: 'active' })}
+      onUpdate={(row, v) => updateUser(row.id, toUser(v))}
+      onDelete={(row) => removeUser(row.id)}
+      rowLabel={(row) => row.fullName}
     />
   )
 }
@@ -126,6 +135,8 @@ export function UsersPage() {
 export function RolesPage() {
   const roles = useUserStore((s) => s.roles)
   const addRole = useUserStore((s) => s.addRole)
+  const updateRole = useUserStore((s) => s.updateRole)
+  const removeRole = useUserStore((s) => s.removeRole)
 
   const columns = useMemo<ColumnDef<AppRole, any>[]>(
     () => [
@@ -191,16 +202,9 @@ export function RolesPage() {
         { name: 'name', label: 'Role name', required: true },
         { name: 'description', label: 'Description', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addRole({
-          code: v.code,
-          name: v.name,
-          description: v.description,
-          modules: ['dashboard'],
-          userCount: 0,
-          system: false,
-        })
-      }
+      onCreate={(v) => addRole({ ...toRole(v), modules: ['dashboard'], userCount: 0, system: false })}
+      onUpdate={(row, v) => updateRole(row.id, toRole(v))}
+      onDelete={(row) => (row.system ? toast.error('System roles cannot be deleted.') : removeRole(row.id))}
     />
   )
 }

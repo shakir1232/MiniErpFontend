@@ -8,9 +8,20 @@ import { useEmployeeLookup, useHrStore } from '@/features/hr/store'
 import { usePayrollStore } from '../store'
 import type { EmployeeContract } from '../types'
 
+const toRecord = (v: Record<string, string>) => ({
+  employeeId: v.employeeId,
+  contractNo: v.contractNo,
+  startDate: v.startDate,
+  endDate: v.endDate,
+  monthlyRemuneration: Number(v.monthlyRemuneration) || 0,
+  incrementPercent: Number(v.incrementPercent) || 0,
+})
+
 export function ContractsPage() {
   const contracts = usePayrollStore((s) => s.contracts)
   const addContract = usePayrollStore((s) => s.addContract)
+  const updateContract = usePayrollStore((s) => s.updateContract)
+  const removeContract = usePayrollStore((s) => s.removeContract)
   const employees = useHrStore((s) => s.employees)
   const employeeById = useEmployeeLookup()
 
@@ -104,18 +115,10 @@ export function ContractsPage() {
         { name: 'monthlyRemuneration', label: 'Monthly remuneration (BDT)', type: 'number', required: true },
         { name: 'incrementPercent', label: 'Increment %', type: 'number' },
       ]}
-      onCreate={(v) =>
-        addContract({
-          employeeId: v.employeeId,
-          contractNo: v.contractNo,
-          startDate: v.startDate,
-          endDate: v.endDate,
-          monthlyRemuneration: Number(v.monthlyRemuneration) || 0,
-          incrementPercent: Number(v.incrementPercent) || 0,
-          renewalCount: 0,
-          status: 'draft',
-        })
-      }
+      onCreate={(v) => addContract({ ...toRecord(v), renewalCount: 0, status: 'draft' })}
+      onUpdate={(row, v) => updateContract(row.id, toRecord(v))}
+      onDelete={(row) => removeContract(row.id)}
+      rowLabel={(row) => row.contractNo}
     />
   )
 }

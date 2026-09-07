@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import type { ColumnDef } from '@tanstack/react-table'
 import { FolderKanban, Plus } from 'lucide-react'
 import { toast } from 'sonner'
+import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { RowActions } from '@/components/common/row-actions'
 import { PageContainer } from '@/components/common/page-container'
 import { PageHeader } from '@/components/common/page-header'
 import { DataTable } from '@/components/common/data-table'
@@ -21,23 +23,29 @@ import type { Project, ProjectStatus } from '../types'
 
 const STATUSES: ProjectStatus[] = ['active', 'closing', 'closed', 'pipeline']
 
+const emptyForm = {
+  name: '',
+  shortName: '',
+  code: '',
+  status: 'pipeline' as ProjectStatus,
+  ministry: '',
+  implementingAgency: '',
+  approvedCost: '',
+  startDate: '',
+  endDate: '',
+  description: '',
+}
+
 export function ProjectsPage() {
   const navigate = useNavigate()
   const projects = useProjectStore((s) => s.projects)
   const addProject = useProjectStore((s) => s.addProject)
+  const updateProject = useProjectStore((s) => s.updateProject)
+  const removeProject = useProjectStore((s) => s.removeProject)
   const [open, setOpen] = useState(false)
-  const [form, setForm] = useState({
-    name: '',
-    shortName: '',
-    code: '',
-    status: 'pipeline' as ProjectStatus,
-    ministry: '',
-    implementingAgency: '',
-    approvedCost: '',
-    startDate: '',
-    endDate: '',
-    description: '',
-  })
+  const [editing, setEditing] = useState<Project | null>(null)
+  const [deleting, setDeleting] = useState<Project | null>(null)
+  const [form, setForm] = useState(emptyForm)
 
   const totals = projects.reduce(
     (acc, p) => ({
@@ -97,11 +105,63 @@ export function ProjectsPage() {
       meta: { align: 'center', label: 'Status' },
       cell: ({ getValue }) => <StatusBadge status={getValue<string>()} />,
     },
+    {
+      id: 'actions',
+      header: () => <span className="sr-only">Actions</span>,
+      enableSorting: false,
+      enableHiding: false,
+      meta: { align: 'right', label: 'Actions', pinMobile: true, className: 'w-px' },
+      cell: ({ row }) => (
+        <RowActions onEdit={() => openEdit(row.original)} onDelete={() => setDeleting(row.original)} />
+      ),
+    },
   ]
+
+  const openCreate = () => {
+    setEditing(null)
+    setForm(emptyForm)
+    setOpen(true)
+  }
+
+  const openEdit = (project: Project) => {
+    setEditing(project)
+    setForm({
+      name: project.name,
+      shortName: project.shortName,
+      code: project.code,
+      status: project.status,
+      ministry: project.ministry,
+      implementingAgency: project.implementingAgency,
+      approvedCost: String(project.approvedCost),
+      startDate: project.startDate,
+      endDate: project.endDate,
+      description: project.description,
+    })
+    setOpen(true)
+  }
 
   const submit = () => {
     if (!form.name || !form.shortName || !form.code) {
       toast.error('Name, short name and project code are required.')
+      return
+    }
+    if (editing) {
+      updateProject(editing.id, {
+        name: form.name,
+        shortName: form.shortName,
+        code: form.code,
+        status: form.status,
+        ministry: form.ministry,
+        implementingAgency: form.implementingAgency,
+        approvedCost: Number(form.approvedCost) || 0,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        description: form.description,
+      })
+      toast.success(`${form.shortName} updated.`)
+      setOpen(false)
+      setEditing(null)
+      setForm(emptyForm)
       return
     }
     addProject({
@@ -130,7 +190,7 @@ export function ProjectsPage() {
     })
     toast.success(`${form.shortName} added to the portfolio.`)
     setOpen(false)
-    setForm({ ...form, name: '', shortName: '', code: '', approvedCost: '', description: '' })
+    setForm(emptyForm)
   }
 
   return (
@@ -139,7 +199,7 @@ export function ProjectsPage() {
         title="Projects info"
         description="Development projects administered under the programme"
         actions={
-          <Button size="sm" onClick={() => setOpen(true)}>
+          <Button size="sm" onClick={openCreate}>
             <Plus className="size-4" /> New project
           </Button>
         }
@@ -167,15 +227,18 @@ export function ProjectsPage() {
 
       <RecordSheet
         open={open}
-        onOpenChange={setOpen}
-        title="New project"
+        onOpenChange={(next) => {
+          setOpen(next)
+          if (!next) setEditing(null)
+        }}
+        title={editing ? `Edit ${editing.shortName}` : 'New project'}
         description="Prototype only — records live in browser memory."
         footer={
           <>
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={submit}>Save project</Button>
+            <Button onClick={submit}>{editing ? 'Update project' : 'Save project'}</Button>
           </>
         }
       >
@@ -237,6 +300,22 @@ export function ProjectsPage() {
           </FormField>
         </FormGrid>
       </RecordSheet>
+
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(next) => !next && setDeleting(null)}
+        title={`Delete ${deleting?.shortName ?? 'project'}?`}
+        description="Budget, accounting and payroll records stay in the prototype session, but the project disappears from the portfolio."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deleting) {
+            removeProject(deleting.id)
+            toast.success(`${deleting.shortName} deleted.`)
+          }
+          setDeleting(null)
+        }}
+      />
     </PageContainer>
   )
 }

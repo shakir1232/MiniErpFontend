@@ -10,11 +10,28 @@ import { formatCurrency, formatPercent } from '@/lib/format'
 import { useAdbGroupLookup, useBudgetStore } from '../store'
 import type { AdbGroupCategory, TrancheMapping } from '../types'
 
+const toTrancheMapping = (v: Record<string, string>) => ({
+  trancheId: v.trancheId,
+  adbGroupId: v.adbGroupId,
+  ceilingAmount: Number(v.ceilingAmount) || 0,
+  claimedAmount: Number(v.claimedAmount) || 0,
+  remarks: v.remarks,
+})
+
+const toCategory = (v: Record<string, string>) => ({
+  code: v.code,
+  name: v.name,
+  description: v.description,
+  reportingOrder: Number(v.reportingOrder) || 99,
+})
+
 export function TrancheMappingPage() {
   const mappings = useBudgetStore((s) => s.trancheMappings)
   const tranches = useBudgetStore((s) => s.tranches)
   const groups = useBudgetStore((s) => s.adbGroups)
   const addTrancheMapping = useBudgetStore((s) => s.addTrancheMapping)
+  const updateTrancheMapping = useBudgetStore((s) => s.updateTrancheMapping)
+  const removeTrancheMapping = useBudgetStore((s) => s.removeTrancheMapping)
   const groupById = useAdbGroupLookup()
   const trancheById = useMemo(() => Object.fromEntries(tranches.map((t) => [t.id, t])), [tranches])
 
@@ -119,15 +136,10 @@ export function TrancheMappingPage() {
         { name: 'claimedAmount', label: 'Claimed to date (BDT)', type: 'number' },
         { name: 'remarks', label: 'Remarks', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addTrancheMapping({
-          trancheId: v.trancheId,
-          adbGroupId: v.adbGroupId,
-          ceilingAmount: Number(v.ceilingAmount) || 0,
-          claimedAmount: Number(v.claimedAmount) || 0,
-          remarks: v.remarks,
-        })
-      }
+      onCreate={(v) => addTrancheMapping(toTrancheMapping(v))}
+      onUpdate={(row, v) => updateTrancheMapping(row.id, toTrancheMapping(v))}
+      onDelete={(row) => removeTrancheMapping(row.id)}
+      rowLabel={() => 'this mapping'}
     />
   )
 }
@@ -136,6 +148,8 @@ export function AdbGroupCategoryPage() {
   const categories = useBudgetStore((s) => s.adbGroupCategories)
   const groups = useBudgetStore((s) => s.adbGroups)
   const addCategory = useBudgetStore((s) => s.addAdbGroupCategory)
+  const updateCategory = useBudgetStore((s) => s.updateAdbGroupCategory)
+  const removeCategory = useBudgetStore((s) => s.removeAdbGroupCategory)
 
   const columns = useMemo<ColumnDef<AdbGroupCategory, any>[]>(
     () => [
@@ -177,14 +191,9 @@ export function AdbGroupCategoryPage() {
         { name: 'reportingOrder', label: 'Reporting order', type: 'number' },
         { name: 'description', label: 'Description', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addCategory({
-          code: v.code,
-          name: v.name,
-          description: v.description,
-          reportingOrder: Number(v.reportingOrder) || 99,
-        })
-      }
+      onCreate={(v) => addCategory(toCategory(v))}
+      onUpdate={(row, v) => updateCategory(row.id, toCategory(v))}
+      onDelete={(row) => removeCategory(row.id)}
     />
   )
 }

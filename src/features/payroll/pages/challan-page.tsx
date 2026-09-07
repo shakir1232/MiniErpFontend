@@ -7,9 +7,22 @@ import { formatCurrency, formatDate, formatNumber } from '@/lib/format'
 import { useChallansOfKind, usePayrollStore } from '../store'
 import type { Challan } from '../types'
 
+const toChallan = (v: Record<string, string>) => ({
+  challanNo: v.challanNo,
+  month: v.month,
+  depositDate: v.depositDate,
+  bank: v.bank,
+  branch: v.branch,
+  amount: Number(v.amount) || 0,
+  employeeCount: Number(v.employeeCount) || 0,
+  economicCode: v.economicCode,
+})
+
 export function ChallanPage({ kind }: { kind: Challan['kind'] }) {
   const rows = useChallansOfKind(kind)
   const addChallan = usePayrollStore((s) => s.addChallan)
+  const updateChallan = usePayrollStore((s) => s.updateChallan)
+  const removeChallan = usePayrollStore((s) => s.removeChallan)
   const isTax = kind === 'tax'
 
   const totals = useMemo(
@@ -102,20 +115,10 @@ export function ChallanPage({ kind }: { kind: Challan['kind'] }) {
         { name: 'employeeCount', label: 'Employee count', type: 'number' },
         { name: 'amount', label: 'Amount (BDT)', type: 'number', required: true },
       ]}
-      onCreate={(v) =>
-        addChallan({
-          challanNo: v.challanNo,
-          kind,
-          month: v.month,
-          depositDate: v.depositDate,
-          bank: v.bank,
-          branch: v.branch,
-          amount: Number(v.amount) || 0,
-          employeeCount: Number(v.employeeCount) || 0,
-          economicCode: v.economicCode,
-          status: 'draft',
-        })
-      }
+      onCreate={(v) => addChallan({ ...toChallan(v), kind, status: 'draft' })}
+      onUpdate={(row, v) => updateChallan(row.id, toChallan(v))}
+      onDelete={(row) => removeChallan(row.id)}
+      rowLabel={(row) => row.challanNo}
     />
   )
 }

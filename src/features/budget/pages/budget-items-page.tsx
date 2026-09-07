@@ -18,10 +18,33 @@ const COPY: Partial<Record<BudgetKind, { title: string; description: string }>> 
   },
 }
 
+const toRecord = (v: Record<string, string>): Omit<BudgetItem, 'id'> => {
+  const quantity = Number(v.quantity) || 0
+  const unitRate = Number(v.unitRate) || 0
+  const totalCost = quantity * unitRate
+  const gobAmount = Number(v.gobAmount) || 0
+  return {
+    serial: v.serial,
+    economicCode: v.economicCode,
+    description: v.description,
+    category: v.category as BudgetItem['category'],
+    unit: v.unit || 'Lump sum',
+    quantity,
+    unitRate,
+    totalCost,
+    gobAmount,
+    paAmount: Math.max(totalCost - gobAmount, 0),
+    ownAmount: 0,
+    groupId: v.groupId,
+  }
+}
+
 export function BudgetItemsPage({ kind }: { kind: BudgetKind }) {
   const copy = COPY[kind] ?? COPY.RDPP!
   const items = useBudgetStore((s) => s.items)
   const addItem = useBudgetStore((s) => s.addItem)
+  const updateItem = useBudgetStore((s) => s.updateItem)
+  const removeItem = useBudgetStore((s) => s.removeItem)
   const adbGroups = useBudgetStore((s) => s.adbGroups)
   const groupById = useAdbGroupLookup()
 
@@ -137,26 +160,10 @@ export function BudgetItemsPage({ kind }: { kind: BudgetKind }) {
         { name: 'unitRate', label: 'Unit rate (BDT)', type: 'number', required: true },
         { name: 'gobAmount', label: 'GoB amount (BDT)', type: 'number' },
       ]}
-      onCreate={(v) => {
-        const quantity = Number(v.quantity) || 0
-        const unitRate = Number(v.unitRate) || 0
-        const totalCost = quantity * unitRate
-        const gobAmount = Number(v.gobAmount) || 0
-        addItem({
-          serial: v.serial,
-          economicCode: v.economicCode,
-          description: v.description,
-          category: v.category as BudgetItem['category'],
-          unit: v.unit || 'Lump sum',
-          quantity,
-          unitRate,
-          totalCost,
-          gobAmount,
-          paAmount: Math.max(totalCost - gobAmount, 0),
-          ownAmount: 0,
-          groupId: v.groupId,
-        })
-      }}
+      onCreate={(v) => addItem(toRecord(v))}
+      onUpdate={(row, v) => updateItem(row.id, toRecord(v))}
+      onDelete={(row) => removeItem(row.id)}
+      rowLabel={(row) => row.description}
     />
   )
 }

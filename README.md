@@ -108,5 +108,14 @@ Every entry in the navigation registry has a real screen — 104 of 104.
   inside the selector.
 - **Reports** use `ReportShell` for the letterhead, filters and print/export actions.
   Print CSS hides the shell so a report prints as a document.
-- **Reference-data screens** use `MasterPage` — pass columns, a field spec and an
-  `onCreate` handler.
+- **Reference-data screens** use `MasterPage` — pass columns, a field spec and
+  `onCreate` / `onUpdate` / `onDelete` handlers. Supplying `onUpdate` or `onDelete`
+  appends a row-actions column automatically (edit pencil, delete trash, confirmation
+  dialog), so every CRUD table gets the same affordances. `MasterPage` maps a record
+  back onto the form by field name; override with `toFormValues` when they differ, and
+  mark immutable keys `createOnly`.
+- **Bespoke tables** (projects, employees, vouchers, letters, chart of accounts) build
+  the same column with `<RowActions />` and their own edit sheet, because their forms
+  are richer than a flat field list.
+- **Row actions on mobile** move into the card header via the column's
+  `meta.pinMobile` flag, so they survive the mobile column budget.

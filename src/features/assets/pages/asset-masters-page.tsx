@@ -6,9 +6,37 @@ import { formatNumber, formatPercent } from '@/lib/format'
 import { useAssetStore } from '../store'
 import type { AssetCategory, AssetLocation, Supplier } from '../types'
 
+const toSupplier = (v: Record<string, string>) => ({
+  name: v.name,
+  contactPerson: v.contactPerson,
+  phone: v.phone,
+  email: v.email,
+  address: v.address,
+  tin: v.tin,
+  bin: v.bin,
+})
+
+const toCategory = (v: Record<string, string>) => ({
+  code: v.code,
+  name: v.name,
+  depreciationRate: Number(v.depreciationRate) || 0,
+  usefulLifeYears: Number(v.usefulLifeYears) || 0,
+})
+
+const toLocation = (v: Record<string, string>) => ({
+  code: v.code,
+  name: v.name,
+  type: v.type as AssetLocation['type'],
+  district: v.district,
+  address: v.address,
+  inCharge: v.inCharge,
+})
+
 export function SuppliersPage() {
   const suppliers = useAssetStore((s) => s.suppliers)
   const addSupplier = useAssetStore((s) => s.addSupplier)
+  const updateSupplier = useAssetStore((s) => s.updateSupplier)
+  const removeSupplier = useAssetStore((s) => s.removeSupplier)
 
   const columns = useMemo<ColumnDef<Supplier, any>[]>(
     () => [
@@ -55,18 +83,9 @@ export function SuppliersPage() {
         { name: 'bin', label: 'BIN' },
         { name: 'address', label: 'Address', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addSupplier({
-          name: v.name,
-          contactPerson: v.contactPerson,
-          phone: v.phone,
-          email: v.email,
-          address: v.address,
-          tin: v.tin,
-          bin: v.bin,
-          status: 'active',
-        })
-      }
+      onCreate={(v) => addSupplier({ ...toSupplier(v), status: 'active' })}
+      onUpdate={(row, v) => updateSupplier(row.id, toSupplier(v))}
+      onDelete={(row) => removeSupplier(row.id)}
     />
   )
 }
@@ -75,6 +94,8 @@ export function AssetCategoriesPage() {
   const categories = useAssetStore((s) => s.categories)
   const assets = useAssetStore((s) => s.assets)
   const addCategory = useAssetStore((s) => s.addCategory)
+  const updateCategory = useAssetStore((s) => s.updateCategory)
+  const removeCategory = useAssetStore((s) => s.removeCategory)
 
   const columns = useMemo<ColumnDef<AssetCategory, any>[]>(
     () => [
@@ -124,15 +145,9 @@ export function AssetCategoriesPage() {
         { name: 'depreciationRate', label: 'Depreciation rate (%)', type: 'number', required: true },
         { name: 'usefulLifeYears', label: 'Useful life (years)', type: 'number', required: true },
       ]}
-      onCreate={(v) =>
-        addCategory({
-          code: v.code,
-          name: v.name,
-          depreciationRate: Number(v.depreciationRate) || 0,
-          usefulLifeYears: Number(v.usefulLifeYears) || 0,
-          parent: null,
-        })
-      }
+      onCreate={(v) => addCategory({ ...toCategory(v), parent: null })}
+      onUpdate={(row, v) => updateCategory(row.id, toCategory(v))}
+      onDelete={(row) => removeCategory(row.id)}
     />
   )
 }
@@ -141,6 +156,8 @@ export function AssetLocationsPage() {
   const locations = useAssetStore((s) => s.locations)
   const assets = useAssetStore((s) => s.assets)
   const addLocation = useAssetStore((s) => s.addLocation)
+  const updateLocation = useAssetStore((s) => s.updateLocation)
+  const removeLocation = useAssetStore((s) => s.removeLocation)
 
   const columns = useMemo<ColumnDef<AssetLocation, any>[]>(
     () => [
@@ -192,16 +209,9 @@ export function AssetLocationsPage() {
         { name: 'inCharge', label: 'In charge' },
         { name: 'address', label: 'Address', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addLocation({
-          code: v.code,
-          name: v.name,
-          type: v.type as AssetLocation['type'],
-          district: v.district,
-          address: v.address,
-          inCharge: v.inCharge,
-        })
-      }
+      onCreate={(v) => addLocation(toLocation(v))}
+      onUpdate={(row, v) => updateLocation(row.id, toLocation(v))}
+      onDelete={(row) => removeLocation(row.id)}
     />
   )
 }

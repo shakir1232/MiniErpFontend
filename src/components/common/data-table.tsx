@@ -35,6 +35,8 @@ declare module '@tanstack/react-table' {
     className?: string
     /** Keep out of the auto-generated mobile card. */
     hideOnMobile?: boolean
+    /** Always render in the mobile card, even past the column budget. */
+    pinMobile?: boolean
   }
 }
 
@@ -92,11 +94,16 @@ export function DataTable<TData>({
   const rows = table.getRowModel().rows
   const hideableColumns = table.getAllColumns().filter((c) => c.getCanHide())
 
-  const mobileColumns = useMemo(
-    () => table.getVisibleLeafColumns().filter((c) => !c.columnDef.meta?.hideOnMobile).slice(0, 5),
+  const mobileColumns = useMemo(() => {
+    const visible = table.getVisibleLeafColumns().filter((c) => !c.columnDef.meta?.hideOnMobile)
+    const budget = visible.slice(0, 5)
+    // Pinned columns (row actions) must survive the mobile column budget.
+    for (const column of visible) {
+      if (column.columnDef.meta?.pinMobile && !budget.includes(column)) budget.push(column)
+    }
+    return budget
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [columnVisibility, columns],
-  )
+  }, [columnVisibility, columns])
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
@@ -246,16 +253,25 @@ export function DataTable<TData>({
               )
             }
             const cells = row.getVisibleCells().filter((c) => mobileColumns.some((mc) => mc.id === c.column.id))
-            const [head, ...rest] = cells
+            // Row actions belong beside the card title, not in the detail list.
+            const actionsCell = cells.find((c) => c.column.id === 'actions')
+            const [head, ...rest] = cells.filter((c) => c !== actionsCell)
             return (
               <div
                 key={row.id}
                 onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 className={cn('rounded-lg border bg-card p-3', onRowClick && 'cursor-pointer active:bg-accent/40')}
               >
-                {head ? (
-                  <div className="mb-2 text-sm font-medium">
-                    {flexRender(head.column.columnDef.cell, head.getContext())}
+                {head || actionsCell ? (
+                  <div className="mb-2 flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1 text-sm font-medium">
+                      {head ? flexRender(head.column.columnDef.cell, head.getContext()) : null}
+                    </div>
+                    {actionsCell ? (
+                      <div className="-mt-1 -mr-1 shrink-0">
+                        {flexRender(actionsCell.column.columnDef.cell, actionsCell.getContext())}
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
                 <dl className="grid grid-cols-[minmax(0,auto)_1fr] gap-x-3 gap-y-1.5 text-sm">

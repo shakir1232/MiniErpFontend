@@ -4,10 +4,19 @@ import { MasterPage } from '@/components/common/master-page'
 import { useHrStore } from '../store'
 import type { DesignationGroup } from '../types'
 
+const toRecord = (v: Record<string, string>): Omit<DesignationGroup, 'id'> => ({
+  name: v.name,
+  code: v.code,
+  order: Number(v.order) || 99,
+  description: v.description,
+})
+
 export function DesignationGroupsPage() {
   const groups = useHrStore((s) => s.designationGroups)
   const designations = useHrStore((s) => s.designations)
   const addGroup = useHrStore((s) => s.addDesignationGroup)
+  const updateGroup = useHrStore((s) => s.updateDesignationGroup)
+  const removeGroup = useHrStore((s) => s.removeDesignationGroup)
 
   const columns = useMemo<ColumnDef<DesignationGroup, any>[]>(
     () => [
@@ -53,14 +62,9 @@ export function DesignationGroupsPage() {
         { name: 'order', label: 'Sort order', type: 'number' },
         { name: 'description', label: 'Description', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addGroup({
-          name: v.name,
-          code: v.code,
-          order: Number(v.order) || 99,
-          description: v.description,
-        })
-      }
+      onCreate={(v) => addGroup(toRecord(v))}
+      onUpdate={(row, v) => updateGroup(row.id, toRecord(v))}
+      onDelete={(row) => removeGroup(row.id)}
     />
   )
 }

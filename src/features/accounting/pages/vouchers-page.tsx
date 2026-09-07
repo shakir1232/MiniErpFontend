@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Check, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { RowActions } from '@/components/common/row-actions'
 import { PageContainer } from '@/components/common/page-container'
 import { PageHeader } from '@/components/common/page-header'
 import { DataTable } from '@/components/common/data-table'
@@ -47,11 +49,15 @@ export function VouchersPage({ type }: { type: VoucherType }) {
   const rows = useVouchersOfType(type)
   const ledgers = useAccountingStore((s) => s.ledgers)
   const addVoucher = useAccountingStore((s) => s.addVoucher)
+  const updateVoucher = useAccountingStore((s) => s.updateVoucher)
+  const removeVoucher = useAccountingStore((s) => s.removeVoucher)
   const setVoucherStatus = useAccountingStore((s) => s.setVoucherStatus)
   const ledgerById = useLedgerLookup()
 
   const [selected, setSelected] = useState<Voucher | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
+  const [editing, setEditing] = useState<Voucher | null>(null)
+  const [deleting, setDeleting] = useState<Voucher | null>(null)
   const [head, setHead] = useState({ date: '2026-09-07', payee: '', narration: '', fundSource: 'ADB Loan 3140-BAN', chequeNo: '' })
   const [lines, setLines] = useState<DraftLine[]>([blankLine(), blankLine()])
 
@@ -107,7 +113,56 @@ export function VouchersPage({ type }: { type: VoucherType }) {
       meta: { align: 'center', label: 'Status' },
       cell: ({ getValue }) => <StatusBadge status={getValue<string>()} />,
     },
+    {
+      id: 'actions',
+      header: () => <span className="sr-only">Actions</span>,
+      enableSorting: false,
+      enableHiding: false,
+      meta: { align: 'right', label: 'Actions', pinMobile: true, className: 'w-px' },
+      cell: ({ row }) => (
+        <RowActions
+          onEdit={() =>
+            row.original.status === 'approved'
+              ? toast.error('Approved vouchers cannot be edited. Reverse it with a journal voucher instead.')
+              : openEdit(row.original)
+          }
+          onDelete={() =>
+            row.original.status === 'approved'
+              ? toast.error('Approved vouchers cannot be deleted.')
+              : setDeleting(row.original)
+          }
+        />
+      ),
+    },
   ]
+
+  const openCreate = () => {
+    setEditing(null)
+    setHead({ date: '2026-09-07', payee: '', narration: '', fundSource: 'ADB Loan 3140-BAN', chequeNo: '' })
+    setLines([blankLine(), blankLine()])
+    setCreateOpen(true)
+  }
+
+  const openEdit = (voucher: Voucher) => {
+    setEditing(voucher)
+    setHead({
+      date: voucher.date,
+      payee: voucher.payee,
+      narration: voucher.narration,
+      fundSource: voucher.fundSource,
+      chequeNo: voucher.chequeNo ?? '',
+    })
+    setLines(
+      voucher.lines.map((line) => ({
+        key: uid('line'),
+        ledgerId: line.ledgerId,
+        description: line.description,
+        debit: line.debit ? String(line.debit) : '',
+        credit: line.credit ? String(line.credit) : '',
+      })),
+    )
+    setCreateOpen(true)
+  }
 
   const submit = () => {
     const filled = lines.filter((l) => l.ledgerId && (Number(l.debit) || Number(l.credit)))
@@ -119,7 +174,6 @@ export function VouchersPage({ type }: { type: VoucherType }) {
       toast.error('Debit and credit totals must match.')
       return
     }
-    const id = uid('vch')
     const voucherLines: VoucherLine[] = filled.map((l) => ({
       id: uid('vl'),
       ledgerId: l.ledgerId,
@@ -127,6 +181,23 @@ export function VouchersPage({ type }: { type: VoucherType }) {
       debit: Number(l.debit) || 0,
       credit: Number(l.credit) || 0,
     }))
+    if (editing) {
+      updateVoucher(editing.id, {
+        date: head.date,
+        narration: head.narration,
+        payee: head.payee,
+        fundSource: head.fundSource,
+        chequeNo: head.chequeNo || null,
+        amount: draftTotals.debit,
+        lines: voucherLines,
+      })
+      toast.success(`${editing.voucherNo} updated.`)
+      setCreateOpen(false)
+      setEditing(null)
+      setLines([blankLine(), blankLine()])
+      setHead({ ...head, payee: '', narration: '', chequeNo: '' })
+      return
+    }
     addVoucher({
       voucherNo: `${meta.prefix}-2609-${String(900 + rows.length)}`,
       type,
@@ -145,7 +216,6 @@ export function VouchersPage({ type }: { type: VoucherType }) {
     setCreateOpen(false)
     setLines([blankLine(), blankLine()])
     setHead({ ...head, payee: '', narration: '', chequeNo: '' })
-    void id
   }
 
   const updateLine = (key: string, patch: Partial<DraftLine>) =>
@@ -157,7 +227,7 @@ export function VouchersPage({ type }: { type: VoucherType }) {
         title={meta.title}
         description={meta.description}
         actions={
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Button size="sm" onClick={openCreate}>
             <Plus className="size-4" /> New {type} voucher
           </Button>
         }
@@ -260,8 +330,11 @@ export function VouchersPage({ type }: { type: VoucherType }) {
       {/* Voucher entry */}
       <RecordSheet
         open={createOpen}
-        onOpenChange={setCreateOpen}
-        title={`New ${meta.title.toLowerCase()}`}
+        onOpenChange={(next) => {
+          setCreateOpen(next)
+          if (!next) setEditing(null)
+        }}
+        title={editing ? `Edit ${editing.voucherNo}` : `New ${meta.title.toLowerCase()}`}
         description="Debit and credit totals must balance before saving."
         wide
         footer={
@@ -270,7 +343,7 @@ export function VouchersPage({ type }: { type: VoucherType }) {
               Cancel
             </Button>
             <Button onClick={submit} disabled={!balanced}>
-              Save voucher
+              {editing ? 'Update voucher' : 'Save voucher'}
             </Button>
           </>
         }
@@ -382,6 +455,22 @@ export function VouchersPage({ type }: { type: VoucherType }) {
           </div>
         </div>
       </RecordSheet>
+
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(next) => !next && setDeleting(null)}
+        title={`Delete ${deleting?.voucherNo ?? 'voucher'}?`}
+        description="The voucher and its account lines are removed from the prototype session."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deleting) {
+            removeVoucher(deleting.id)
+            toast.success(`${deleting.voucherNo} deleted.`)
+          }
+          setDeleting(null)
+        }}
+      />
     </PageContainer>
   )
 }

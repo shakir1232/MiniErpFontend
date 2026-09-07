@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Plus, UserCheck, UserRound, UserX } from 'lucide-react'
 import { toast } from 'sonner'
+import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { RowActions } from '@/components/common/row-actions'
 import { PageContainer } from '@/components/common/page-container'
 import { PageHeader } from '@/components/common/page-header'
 import { DataTable } from '@/components/common/data-table'
@@ -36,12 +38,16 @@ export function EmployeesPage() {
   const designations = useHrStore((s) => s.designations)
   const groups = useHrStore((s) => s.employeeGroups)
   const addEmployee = useHrStore((s) => s.addEmployee)
+  const updateEmployee = useHrStore((s) => s.updateEmployee)
+  const removeEmployee = useHrStore((s) => s.removeEmployee)
   const designationById = useDesignationLookup()
   const groupById = useEmployeeGroupLookup()
 
   const [statusFilter, setStatusFilter] = useState<'all' | Employee['status']>('all')
   const [selected, setSelected] = useState<Employee | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
+  const [editing, setEditing] = useState<Employee | null>(null)
+  const [deleting, setDeleting] = useState<Employee | null>(null)
   const [form, setForm] = useState(emptyForm)
 
   const rows = useMemo(
@@ -102,7 +108,40 @@ export function EmployeesPage() {
       meta: { align: 'center', label: 'Status' },
       cell: ({ getValue }) => <StatusBadge status={getValue<string>()} />,
     },
+    {
+      id: 'actions',
+      header: () => <span className="sr-only">Actions</span>,
+      enableSorting: false,
+      enableHiding: false,
+      meta: { align: 'right', label: 'Actions', pinMobile: true, className: 'w-px' },
+      cell: ({ row }) => (
+        <RowActions onEdit={() => openEdit(row.original)} onDelete={() => setDeleting(row.original)} />
+      ),
+    },
   ]
+
+  const openCreate = () => {
+    setEditing(null)
+    setForm(emptyForm)
+    setCreateOpen(true)
+  }
+
+  const openEdit = (employee: Employee) => {
+    setEditing(employee)
+    setForm({
+      name: employee.name,
+      code: employee.code,
+      designationId: employee.designationId,
+      employeeGroupId: employee.employeeGroupId,
+      mobile: employee.mobile,
+      email: employee.email,
+      joiningDate: employee.joiningDate,
+      contractEndDate: employee.contractEndDate,
+      grossSalary: String(employee.grossSalary),
+      gender: employee.gender,
+    })
+    setCreateOpen(true)
+  }
 
   const submit = () => {
     if (!form.name || !form.code || !form.designationId || !form.employeeGroupId) {
@@ -110,6 +149,26 @@ export function EmployeesPage() {
       return
     }
     const group = groups.find((g) => g.id === form.employeeGroupId)!
+    if (editing) {
+      updateEmployee(editing.id, {
+        name: form.name,
+        code: form.code,
+        gender: form.gender,
+        mobile: form.mobile,
+        email: form.email,
+        designationId: form.designationId,
+        employeeGroupId: form.employeeGroupId,
+        projectId: group.projectId,
+        joiningDate: form.joiningDate || editing.joiningDate,
+        contractEndDate: form.contractEndDate || editing.contractEndDate,
+        grossSalary: Number(form.grossSalary) || 0,
+      })
+      toast.success(`${form.name} updated.`)
+      setCreateOpen(false)
+      setEditing(null)
+      setForm(emptyForm)
+      return
+    }
     addEmployee({
       code: form.code,
       name: form.name,
@@ -144,7 +203,7 @@ export function EmployeesPage() {
         title="Employees"
         description="Project staff on contract across all implementation units"
         actions={
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Button size="sm" onClick={openCreate}>
             <Plus className="size-4" /> Add employee
           </Button>
         }
@@ -238,15 +297,18 @@ export function EmployeesPage() {
 
       <RecordSheet
         open={createOpen}
-        onOpenChange={setCreateOpen}
-        title="Add employee"
+        onOpenChange={(next) => {
+          setCreateOpen(next)
+          if (!next) setEditing(null)
+        }}
+        title={editing ? `Edit ${editing.name}` : 'Add employee'}
         description="Prototype only — records live in browser memory."
         footer={
           <>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={submit}>Save employee</Button>
+            <Button onClick={submit}>{editing ? 'Update employee' : 'Save employee'}</Button>
           </>
         }
       >
@@ -324,6 +386,22 @@ export function EmployeesPage() {
           </FormField>
         </FormGrid>
       </RecordSheet>
+
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(next) => !next && setDeleting(null)}
+        title={`Delete ${deleting?.name ?? 'employee'}?`}
+        description="The employee is removed from HR, payroll lists and statements for this prototype session."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deleting) {
+            removeEmployee(deleting.id)
+            toast.success(`${deleting.name} deleted.`)
+          }
+          setDeleting(null)
+        }}
+      />
     </PageContainer>
   )
 }

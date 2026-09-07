@@ -35,6 +35,7 @@ type SettingsState = {
   associationGroups: AssociationGroup[]
 
   add: <K extends CollectionKey>(collection: K, record: Omit<SettingsState[K][number], 'id'>) => void
+  update: <K extends CollectionKey>(collection: K, id: string, patch: Partial<SettingsState[K][number]>) => void
   remove: (collection: CollectionKey, id: string) => void
 }
 
@@ -71,6 +72,10 @@ export const useSettingsStore = create<SettingsState>()((set) => ({
   add: (collection, record) =>
     set((state) => ({
       [collection]: [...(state[collection] as any[]), { ...(record as object), id: uid(collection.slice(0, 3)) }],
+    }) as any),
+  update: (collection, id, patch) =>
+    set((state) => ({
+      [collection]: (state[collection] as any[]).map((r) => (r.id === id ? { ...r, ...(patch as object) } : r)),
     }) as any),
   remove: (collection, id) =>
     set((state) => ({ [collection]: (state[collection] as any[]).filter((r) => r.id !== id) }) as any),

@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { create } from 'zustand'
 import { uid } from '@/lib/id'
+import { dropById, patchById } from '@/lib/collection'
 import {
   challans as seedChallans,
   employeeContracts as seedContracts,
@@ -20,10 +21,19 @@ type PayrollState = {
   challans: Challan[]
 
   addAdjustment: (adjustment: Omit<SalaryAdjustment, 'id'>) => void
+  updateAdjustment: (id: string, patch: Partial<SalaryAdjustment>) => void
+  removeAdjustment: (id: string) => void
   approveAdjustment: (id: string) => void
+
   addContract: (contract: Omit<EmployeeContract, 'id'>) => void
+  updateContract: (id: string, patch: Partial<EmployeeContract>) => void
+  removeContract: (id: string) => void
+
   setRunStatus: (id: string, status: PayrollRun['status']) => void
+
   addChallan: (challan: Omit<Challan, 'id'>) => void
+  updateChallan: (id: string, patch: Partial<Challan>) => void
+  removeChallan: (id: string) => void
 }
 
 export const usePayrollStore = create<PayrollState>()((set) => ({
@@ -35,11 +45,19 @@ export const usePayrollStore = create<PayrollState>()((set) => ({
   challans: seedChallans,
 
   addAdjustment: (adjustment) => set((s) => ({ adjustments: [{ ...adjustment, id: uid('adj') }, ...s.adjustments] })),
-  approveAdjustment: (id) =>
-    set((s) => ({ adjustments: s.adjustments.map((a) => (a.id === id ? { ...a, approved: true } : a)) })),
+  updateAdjustment: (id, patch) => set((s) => ({ adjustments: patchById(s.adjustments, id, patch) })),
+  removeAdjustment: (id) => set((s) => ({ adjustments: dropById(s.adjustments, id) })),
+  approveAdjustment: (id) => set((s) => ({ adjustments: patchById(s.adjustments, id, { approved: true }) })),
+
   addContract: (contract) => set((s) => ({ contracts: [{ ...contract, id: uid('ct') }, ...s.contracts] })),
-  setRunStatus: (id, status) => set((s) => ({ runs: s.runs.map((r) => (r.id === id ? { ...r, status } : r)) })),
+  updateContract: (id, patch) => set((s) => ({ contracts: patchById(s.contracts, id, patch) })),
+  removeContract: (id) => set((s) => ({ contracts: dropById(s.contracts, id) })),
+
+  setRunStatus: (id, status) => set((s) => ({ runs: patchById(s.runs, id, { status }) })),
+
   addChallan: (challan) => set((s) => ({ challans: [{ ...challan, id: uid('chl') }, ...s.challans] })),
+  updateChallan: (id, patch) => set((s) => ({ challans: patchById(s.challans, id, patch) })),
+  removeChallan: (id) => set((s) => ({ challans: dropById(s.challans, id) })),
 }))
 
 export function useRunLines(runId: string | undefined) {

@@ -5,10 +5,22 @@ import { formatCurrency, formatNumber } from '@/lib/format'
 import { useDesignationGroupLookup, useHrStore } from '../store'
 import type { Designation } from '../types'
 
+const toRecord = (v: Record<string, string>): Omit<Designation, 'id'> => ({
+  title: v.title,
+  code: v.code,
+  groupId: v.groupId,
+  grade: v.grade || '—',
+  minSalary: Number(v.minSalary) || 0,
+  maxSalary: Number(v.maxSalary) || 0,
+  headcount: Number(v.headcount) || 0,
+})
+
 export function DesignationsPage() {
   const designations = useHrStore((s) => s.designations)
   const groups = useHrStore((s) => s.designationGroups)
   const addDesignation = useHrStore((s) => s.addDesignation)
+  const updateDesignation = useHrStore((s) => s.updateDesignation)
+  const removeDesignation = useHrStore((s) => s.removeDesignation)
   const groupById = useDesignationGroupLookup()
 
   const columns = useMemo<ColumnDef<Designation, any>[]>(
@@ -71,17 +83,10 @@ export function DesignationsPage() {
         { name: 'minSalary', label: 'Minimum salary (BDT)', type: 'number' },
         { name: 'maxSalary', label: 'Maximum salary (BDT)', type: 'number' },
       ]}
-      onCreate={(v) =>
-        addDesignation({
-          title: v.title,
-          code: v.code,
-          groupId: v.groupId,
-          grade: v.grade || '—',
-          minSalary: Number(v.minSalary) || 0,
-          maxSalary: Number(v.maxSalary) || 0,
-          headcount: Number(v.headcount) || 0,
-        })
-      }
+      onCreate={(v) => addDesignation(toRecord(v))}
+      onUpdate={(row, v) => updateDesignation(row.id, toRecord(v))}
+      onDelete={(row) => removeDesignation(row.id)}
+      rowLabel={(row) => row.title}
     />
   )
 }

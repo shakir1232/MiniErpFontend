@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { uid } from '@/lib/id'
+import { dropById, patchById } from '@/lib/collection'
 import {
   implementationAgencies as seedAgencies,
   organizationInfo as seedOrg,
@@ -30,9 +31,11 @@ type ProjectState = {
   removeProject: (id: string) => void
 
   addBankAccount: (account: Omit<ProjectBankAccount, 'id'>) => void
+  updateBankAccount: (id: string, patch: Partial<ProjectBankAccount>) => void
   removeBankAccount: (id: string) => void
 
   addAgency: (agency: Omit<ImplementationAgency, 'id'>) => void
+  updateAgency: (id: string, patch: Partial<ImplementationAgency>) => void
   removeAgency: (id: string) => void
 
   updateOrganization: (patch: Partial<OrganizationInfo>) => void
@@ -51,16 +54,17 @@ export const useProjectStore = create<ProjectState>()((set) => ({
     set((s) => ({ projects: [created, ...s.projects] }))
     return created
   },
-  updateProject: (id, patch) =>
-    set((s) => ({ projects: s.projects.map((p) => (p.id === id ? { ...p, ...patch } : p)) })),
-  removeProject: (id) => set((s) => ({ projects: s.projects.filter((p) => p.id !== id) })),
+  updateProject: (id, patch) => set((s) => ({ projects: patchById(s.projects, id, patch) })),
+  removeProject: (id) => set((s) => ({ projects: dropById(s.projects, id) })),
 
   addBankAccount: (account) =>
     set((s) => ({ bankAccounts: [{ ...account, id: uid('pba') }, ...s.bankAccounts] })),
-  removeBankAccount: (id) => set((s) => ({ bankAccounts: s.bankAccounts.filter((a) => a.id !== id) })),
+  updateBankAccount: (id, patch) => set((s) => ({ bankAccounts: patchById(s.bankAccounts, id, patch) })),
+  removeBankAccount: (id) => set((s) => ({ bankAccounts: dropById(s.bankAccounts, id) })),
 
   addAgency: (agency) => set((s) => ({ agencies: [{ ...agency, id: uid('ia') }, ...s.agencies] })),
-  removeAgency: (id) => set((s) => ({ agencies: s.agencies.filter((a) => a.id !== id) })),
+  updateAgency: (id, patch) => set((s) => ({ agencies: patchById(s.agencies, id, patch) })),
+  removeAgency: (id) => set((s) => ({ agencies: dropById(s.agencies, id) })),
 
   updateOrganization: (patch) => set((s) => ({ organization: { ...s.organization, ...patch } })),
 }))

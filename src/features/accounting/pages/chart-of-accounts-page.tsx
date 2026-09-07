@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { ChevronRight, FolderTree, Plus, Search } from 'lucide-react'
 import { toast } from 'sonner'
+import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { RowActions } from '@/components/common/row-actions'
 import { PageContainer } from '@/components/common/page-container'
 import { PageHeader } from '@/components/common/page-header'
 import { SectionCard } from '@/components/common/section-card'
@@ -18,13 +20,19 @@ import { cn } from '@/lib/utils'
 import { ledgerBalance, useAccountingStore } from '../store'
 import type { AccountGroup, Ledger } from '../types'
 
+const emptyLedgerForm = { code: '', name: '', groupId: '', economicCode: '', openingBalance: '' }
+
 export function ChartOfAccountsPage() {
   const groups = useAccountingStore((s) => s.groups)
   const ledgers = useAccountingStore((s) => s.ledgers)
   const addLedger = useAccountingStore((s) => s.addLedger)
+  const updateLedger = useAccountingStore((s) => s.updateLedger)
+  const removeLedger = useAccountingStore((s) => s.removeLedger)
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
-  const [form, setForm] = useState({ code: '', name: '', groupId: '', economicCode: '', openingBalance: '' })
+  const [editing, setEditing] = useState<Ledger | null>(null)
+  const [deleting, setDeleting] = useState<Ledger | null>(null)
+  const [form, setForm] = useState(emptyLedgerForm)
 
   const roots = useMemo(() => groups.filter((g) => g.parentId === null), [groups])
   const childrenOf = useMemo(() => {
@@ -108,6 +116,7 @@ export function ChartOfAccountsPage() {
                   {formatCurrency(ledgerBalance(ledger, nature))}
                 </span>
                 <StatusBadge status={ledger.status} className="hidden lg:inline-flex" />
+                <RowActions onEdit={() => openEdit(ledger)} onDelete={() => setDeleting(ledger)} />
               </div>
             )
           })}
@@ -116,9 +125,41 @@ export function ChartOfAccountsPage() {
     )
   }
 
+  const openCreate = () => {
+    setEditing(null)
+    setForm(emptyLedgerForm)
+    setOpen(true)
+  }
+
+  const openEdit = (ledger: Ledger) => {
+    setEditing(ledger)
+    setForm({
+      code: ledger.code,
+      name: ledger.name,
+      groupId: ledger.groupId,
+      economicCode: ledger.economicCode,
+      openingBalance: String(ledger.openingBalance),
+    })
+    setOpen(true)
+  }
+
   const submit = () => {
     if (!form.code || !form.name || !form.groupId) {
       toast.error('Code, name and group are required.')
+      return
+    }
+    if (editing) {
+      updateLedger(editing.id, {
+        code: form.code,
+        name: form.name,
+        groupId: form.groupId,
+        economicCode: form.economicCode || '—',
+        openingBalance: Number(form.openingBalance) || 0,
+      })
+      toast.success(`Ledger ${form.name} updated.`)
+      setOpen(false)
+      setEditing(null)
+      setForm(emptyLedgerForm)
       return
     }
     addLedger({
@@ -134,7 +175,7 @@ export function ChartOfAccountsPage() {
     })
     toast.success(`Ledger ${form.name} created.`)
     setOpen(false)
-    setForm({ code: '', name: '', groupId: '', economicCode: '', openingBalance: '' })
+    setForm(emptyLedgerForm)
   }
 
   return (
@@ -143,7 +184,7 @@ export function ChartOfAccountsPage() {
         title="Chart of accounts"
         description="Account groups and ledgers with their government economic codes"
         actions={
-          <Button size="sm" onClick={() => setOpen(true)}>
+          <Button size="sm" onClick={openCreate}>
             <Plus className="size-4" /> Add ledger
           </Button>
         }
@@ -170,15 +211,18 @@ export function ChartOfAccountsPage() {
 
       <RecordSheet
         open={open}
-        onOpenChange={setOpen}
-        title="Add ledger"
+        onOpenChange={(next) => {
+          setOpen(next)
+          if (!next) setEditing(null)
+        }}
+        title={editing ? `Edit ${editing.name}` : 'Add ledger'}
         description="Prototype only — records live in browser memory."
         footer={
           <>
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={submit}>Save ledger</Button>
+            <Button onClick={submit}>{editing ? 'Update ledger' : 'Save ledger'}</Button>
           </>
         }
       >
@@ -216,6 +260,22 @@ export function ChartOfAccountsPage() {
           </FormField>
         </FormGrid>
       </RecordSheet>
+
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(next) => !next && setDeleting(null)}
+        title={`Delete ${deleting?.name ?? 'ledger'}?`}
+        description="Vouchers already posted to this ledger keep their line, but the account disappears from the chart."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deleting) {
+            removeLedger(deleting.id)
+            toast.success(`${deleting.name} deleted.`)
+          }
+          setDeleting(null)
+        }}
+      />
     </PageContainer>
   )
 }

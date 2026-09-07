@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { create } from 'zustand'
 import { uid } from '@/lib/id'
+import { dropById, patchById } from '@/lib/collection'
 import {
   letterDispatches as seedDispatches,
   letterEntities as seedEntities,
@@ -18,9 +19,17 @@ type LetterState = {
   memos: Memo[]
 
   addLetter: (letter: Omit<Letter, 'id'>) => void
+  updateLetter: (id: string, patch: Partial<Letter>) => void
+  removeLetter: (id: string) => void
   setLetterStatus: (id: string, status: Letter['status']) => void
+
   addDispatch: (dispatch: Omit<LetterDispatch, 'id'>) => void
+  updateDispatch: (id: string, patch: Partial<LetterDispatch>) => void
+  removeDispatch: (id: string) => void
+
   addMemo: (memo: Omit<Memo, 'id'>) => void
+  updateMemo: (id: string, patch: Partial<Memo>) => void
+  removeMemo: (id: string) => void
 }
 
 export const useLetterStore = create<LetterState>()((set) => ({
@@ -31,14 +40,21 @@ export const useLetterStore = create<LetterState>()((set) => ({
   memos: seedMemos,
 
   addLetter: (letter) => set((s) => ({ letters: [{ ...letter, id: uid('ltr') }, ...s.letters] })),
-  setLetterStatus: (id, status) =>
-    set((s) => ({ letters: s.letters.map((l) => (l.id === id ? { ...l, status } : l)) })),
+  updateLetter: (id, patch) => set((s) => ({ letters: patchById(s.letters, id, patch) })),
+  removeLetter: (id) =>
+    set((s) => ({ letters: dropById(s.letters, id), dispatches: s.dispatches.filter((d) => d.letterId !== id) })),
+  setLetterStatus: (id, status) => set((s) => ({ letters: patchById(s.letters, id, { status }) })),
   addDispatch: (dispatch) =>
     set((s) => ({
       dispatches: [{ ...dispatch, id: uid('dsp') }, ...s.dispatches],
       letters: s.letters.map((l) => (l.id === dispatch.letterId ? { ...l, status: 'dispatched' } : l)),
     })),
+  updateDispatch: (id, patch) => set((s) => ({ dispatches: patchById(s.dispatches, id, patch) })),
+  removeDispatch: (id) => set((s) => ({ dispatches: dropById(s.dispatches, id) })),
+
   addMemo: (memo) => set((s) => ({ memos: [{ ...memo, id: uid('memo') }, ...s.memos] })),
+  updateMemo: (id, patch) => set((s) => ({ memos: patchById(s.memos, id, patch) })),
+  removeMemo: (id) => set((s) => ({ memos: dropById(s.memos, id) })),
 }))
 
 export function useEntityLookup() {

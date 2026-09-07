@@ -11,9 +11,33 @@ import type { AdbGroup, GroupMapping, Tranche } from '../types'
 
 const FUND_SOURCES = ['ADB Loan 3140-BAN', 'ADB Grant 0387-BAN', 'GoB Development Budget', 'SDC Grant TF-0912']
 
+const toTranche = (v: Record<string, string>) => ({
+  name: v.name,
+  fundSource: v.fundSource,
+  fiscalYearId: v.fiscalYearId,
+  allocated: Number(v.allocated) || 0,
+  released: Number(v.released) || 0,
+})
+
+const toAdbGroup = (v: Record<string, string>) => ({
+  code: v.code,
+  name: v.name,
+  category: v.category || 'Revenue',
+  description: v.description,
+})
+
+const toMapping = (v: Record<string, string>) => ({
+  adbGroupId: v.adbGroupId,
+  economicCode: v.economicCode,
+  ledgerName: v.ledgerName,
+  remarks: v.remarks,
+})
+
 export function TrancheAllocationPage() {
   const tranches = useBudgetStore((s) => s.tranches)
   const addTranche = useBudgetStore((s) => s.addTranche)
+  const updateTranche = useBudgetStore((s) => s.updateTranche)
+  const removeTranche = useBudgetStore((s) => s.removeTranche)
   const fyById = useMemo(() => Object.fromEntries(fiscalYears.map((f) => [f.id, f])), [])
 
   const totals = useMemo(
@@ -122,17 +146,9 @@ export function TrancheAllocationPage() {
         { name: 'allocated', label: 'Allocated (BDT)', type: 'number', required: true },
         { name: 'released', label: 'Released (BDT)', type: 'number' },
       ]}
-      onCreate={(v) =>
-        addTranche({
-          name: v.name,
-          fundSource: v.fundSource,
-          fiscalYearId: v.fiscalYearId,
-          allocated: Number(v.allocated) || 0,
-          released: Number(v.released) || 0,
-          utilised: 0,
-          status: 'pending',
-        })
-      }
+      onCreate={(v) => addTranche({ ...toTranche(v), utilised: 0, status: 'pending' })}
+      onUpdate={(row, v) => updateTranche(row.id, toTranche(v))}
+      onDelete={(row) => removeTranche(row.id)}
     />
   )
 }
@@ -141,6 +157,8 @@ export function AdbGroupPage() {
   const groups = useBudgetStore((s) => s.adbGroups)
   const items = useBudgetStore((s) => s.items)
   const addGroup = useBudgetStore((s) => s.addAdbGroup)
+  const updateGroup = useBudgetStore((s) => s.updateAdbGroup)
+  const removeGroup = useBudgetStore((s) => s.removeAdbGroup)
 
   const columns = useMemo<ColumnDef<AdbGroup, any>[]>(
     () => [
@@ -192,7 +210,9 @@ export function AdbGroupPage() {
         ] },
         { name: 'description', label: 'Description', type: 'textarea', span: true },
       ]}
-      onCreate={(v) => addGroup({ code: v.code, name: v.name, category: v.category || 'Revenue', description: v.description })}
+      onCreate={(v) => addGroup(toAdbGroup(v))}
+      onUpdate={(row, v) => updateGroup(row.id, toAdbGroup(v))}
+      onDelete={(row) => removeGroup(row.id)}
     />
   )
 }
@@ -201,6 +221,8 @@ export function GroupMappingPage() {
   const mappings = useBudgetStore((s) => s.mappings)
   const groups = useBudgetStore((s) => s.adbGroups)
   const addMapping = useBudgetStore((s) => s.addMapping)
+  const updateMapping = useBudgetStore((s) => s.updateMapping)
+  const removeMapping = useBudgetStore((s) => s.removeMapping)
   const groupById = useAdbGroupLookup()
 
   const columns = useMemo<ColumnDef<GroupMapping, any>[]>(
@@ -249,14 +271,10 @@ export function GroupMappingPage() {
         { name: 'ledgerName', label: 'Ledger name', required: true },
         { name: 'remarks', label: 'Remarks', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addMapping({
-          adbGroupId: v.adbGroupId,
-          economicCode: v.economicCode,
-          ledgerName: v.ledgerName,
-          remarks: v.remarks,
-        })
-      }
+      onCreate={(v) => addMapping(toMapping(v))}
+      onUpdate={(row, v) => updateMapping(row.id, toMapping(v))}
+      onDelete={(row) => removeMapping(row.id)}
+      rowLabel={(row) => row.ledgerName}
     />
   )
 }

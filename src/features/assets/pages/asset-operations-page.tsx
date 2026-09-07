@@ -16,10 +16,44 @@ import {
 } from '../store'
 import type { Asset, AssetTransfer, DeliveryChallan } from '../types'
 
+const toChallan = (v: Record<string, string>) => ({
+  challanNo: v.challanNo,
+  date: v.date,
+  supplierId: v.supplierId,
+  packageNo: v.packageNo || '—',
+  itemCount: Number(v.itemCount) || 0,
+  totalValue: Number(v.totalValue) || 0,
+  receivedBy: v.receivedBy || '—',
+})
+
+const toAsset = (v: Record<string, string>, fallbackSupplierId: string) => ({
+  tag: v.tag,
+  name: v.name,
+  categoryId: v.categoryId,
+  supplierId: v.supplierId || fallbackSupplierId,
+  purchaseDate: v.purchaseDate || new Date().toISOString().slice(0, 10),
+  purchaseValue: Number(v.purchaseValue) || 0,
+  locationId: v.locationId,
+  assignedTo: v.assignedTo || null,
+  status: (v.assignedTo ? 'assigned' : 'in store') as Asset['status'],
+  serialNo: v.serialNo || '—',
+})
+
+const toTransfer = (v: Record<string, string>) => ({
+  transferNo: v.transferNo,
+  assetId: v.assetId,
+  fromLocationId: v.fromLocationId,
+  toLocationId: v.toLocationId,
+  date: v.date,
+  reason: v.reason,
+})
+
 export function DeliveryChallansPage() {
   const challans = useAssetStore((s) => s.challans)
   const suppliers = useAssetStore((s) => s.suppliers)
   const addChallan = useAssetStore((s) => s.addChallan)
+  const updateChallan = useAssetStore((s) => s.updateChallan)
+  const removeChallan = useAssetStore((s) => s.removeChallan)
   const supplierById = useSupplierLookup()
 
   const columns = useMemo<ColumnDef<DeliveryChallan, any>[]>(
@@ -86,18 +120,10 @@ export function DeliveryChallansPage() {
         { name: 'totalValue', label: 'Total value (BDT)', type: 'number', required: true },
         { name: 'receivedBy', label: 'Received by' },
       ]}
-      onCreate={(v) =>
-        addChallan({
-          challanNo: v.challanNo,
-          date: v.date,
-          supplierId: v.supplierId,
-          packageNo: v.packageNo || '—',
-          itemCount: Number(v.itemCount) || 0,
-          totalValue: Number(v.totalValue) || 0,
-          receivedBy: v.receivedBy || '—',
-          status: 'pending',
-        })
-      }
+      onCreate={(v) => addChallan({ ...toChallan(v), status: 'pending' })}
+      onUpdate={(row, v) => updateChallan(row.id, toChallan(v))}
+      onDelete={(row) => removeChallan(row.id)}
+      rowLabel={(row) => row.challanNo}
     />
   )
 }
@@ -108,6 +134,8 @@ export function AssetAssignmentsPage() {
   const locations = useAssetStore((s) => s.locations)
   const suppliers = useAssetStore((s) => s.suppliers)
   const addAsset = useAssetStore((s) => s.addAsset)
+  const updateAsset = useAssetStore((s) => s.updateAsset)
+  const removeAsset = useAssetStore((s) => s.removeAsset)
   const categoryById = useAssetCategoryLookup()
   const locationById = useAssetLocationLookup()
 
@@ -221,21 +249,15 @@ export function AssetAssignmentsPage() {
       ]}
       onCreate={(v) =>
         addAsset({
-          tag: v.tag,
-          name: v.name,
-          categoryId: v.categoryId,
-          supplierId: v.supplierId || suppliers[0].id,
+          ...toAsset(v, suppliers[0].id),
           challanId: null,
-          purchaseDate: v.purchaseDate || new Date().toISOString().slice(0, 10),
-          purchaseValue: Number(v.purchaseValue) || 0,
           currentValue: Number(v.purchaseValue) || 0,
-          locationId: v.locationId,
-          assignedTo: v.assignedTo || null,
           condition: 'new',
-          status: v.assignedTo ? 'assigned' : 'in store',
-          serialNo: v.serialNo || '—',
         })
       }
+      onUpdate={(row, v) => updateAsset(row.id, toAsset(v, suppliers[0].id))}
+      onDelete={(row) => removeAsset(row.id)}
+      rowLabel={(row) => row.tag}
     />
   )
 }
@@ -245,6 +267,8 @@ export function AssetTransfersPage() {
   const assets = useAssetStore((s) => s.assets)
   const locations = useAssetStore((s) => s.locations)
   const addTransfer = useAssetStore((s) => s.addTransfer)
+  const updateTransfer = useAssetStore((s) => s.updateTransfer)
+  const removeTransfer = useAssetStore((s) => s.removeTransfer)
   const assetById = useAssetLookup()
   const locationById = useAssetLocationLookup()
 
@@ -327,18 +351,10 @@ export function AssetTransfersPage() {
         },
         { name: 'reason', label: 'Reason', type: 'textarea', span: true },
       ]}
-      onCreate={(v) =>
-        addTransfer({
-          transferNo: v.transferNo,
-          assetId: v.assetId,
-          fromLocationId: v.fromLocationId,
-          toLocationId: v.toLocationId,
-          date: v.date,
-          reason: v.reason,
-          approvedBy: 'Md. Shafiqul Islam',
-          status: 'pending',
-        })
-      }
+      onCreate={(v) => addTransfer({ ...toTransfer(v), approvedBy: 'Md. Shafiqul Islam', status: 'pending' })}
+      onUpdate={(row, v) => updateTransfer(row.id, toTransfer(v))}
+      onDelete={(row) => removeTransfer(row.id)}
+      rowLabel={(row) => row.transferNo}
     />
   )
 }

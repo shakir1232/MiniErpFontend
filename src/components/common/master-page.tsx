@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
@@ -6,6 +6,8 @@ import { PageContainer } from '@/components/common/page-container'
 import { PageHeader } from '@/components/common/page-header'
 import { DataTable } from '@/components/common/data-table'
 import { RecordSheet } from '@/components/common/record-sheet'
+import { RowActions } from '@/components/common/row-actions'
+import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { FormField, FormGrid } from '@/components/common/form-field'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +24,8 @@ export type MasterField = {
   hint?: string
   placeholder?: string
   defaultValue?: string
+  /** Hide on the edit form (e.g. immutable keys). */
+  createOnly?: boolean
 }
 
 export type MasterPageProps<TData> = {
@@ -31,6 +35,17 @@ export type MasterPageProps<TData> = {
   data: TData[]
   fields: MasterField[]
   onCreate: (values: Record<string, string>) => void
+  /** Supply to enable the row edit action. */
+  onUpdate?: (row: TData, values: Record<string, string>) => void
+  /** Supply to enable the row delete action. */
+  onDelete?: (row: TData) => void
+  /** Label shown in the delete confirmation; defaults to the record's `name` or id. */
+  rowLabel?: (row: TData) => string
+  /**
+   * Map a record onto form values when editing.
+   * Defaults to reading each field name straight off the record.
+   */
+  toFormValues?: (row: TData) => Record<string, string>
   addLabel?: string
   searchPlaceholder?: string
   /** Rendered above the table — usually a row of StatCards. */
@@ -43,8 +58,8 @@ export type MasterPageProps<TData> = {
 }
 
 /**
- * Header + table + create-sheet scaffold for reference-data screens.
- * Keeps the ~20 lookup maintenance pages in the ERP consistent and tiny.
+ * Header + table + create/edit sheet + delete confirmation for reference-data
+ * screens. Keeps the ~40 maintenance pages in the ERP consistent and tiny.
  */
 export function MasterPage<TData>({
   title,
@@ -53,6 +68,10 @@ export function MasterPage<TData>({
   data,
   fields,
   onCreate,
+  onUpdate,
+  onDelete,
+  rowLabel,
+  toFormValues,
   addLabel = 'Add new',
   searchPlaceholder = 'Search…',
   stats,
@@ -62,21 +81,85 @@ export function MasterPage<TData>({
   emptyTitle = 'No records',
   children,
 }: MasterPageProps<TData>) {
-  const initial = Object.fromEntries(fields.map((f) => [f.name, f.defaultValue ?? '']))
+  const initial = useMemo(
+    () => Object.fromEntries(fields.map((f) => [f.name, f.defaultValue ?? ''])),
+    [fields],
+  )
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<TData | null>(null)
+  const [deleting, setDeleting] = useState<TData | null>(null)
   const [values, setValues] = useState<Record<string, string>>(initial)
 
+  const describe = (row: TData) => {
+    if (rowLabel) return rowLabel(row)
+    const record = row as Record<string, unknown>
+    return String(record.name ?? record.title ?? record.code ?? record.id ?? 'this record')
+  }
+
+  const openCreate = () => {
+    setEditing(null)
+    setValues(initial)
+    setOpen(true)
+  }
+
+  const openEdit = (row: TData) => {
+    const record = row as Record<string, unknown>
+    const next =
+      toFormValues?.(row) ??
+      Object.fromEntries(
+        fields.map((field) => {
+          const value = record[field.name]
+          return [field.name, value === null || value === undefined ? '' : String(value)]
+        }),
+      )
+    setEditing(row)
+    setValues(next)
+    setOpen(true)
+  }
+
   const submit = () => {
-    const missing = fields.filter((f) => f.required && !values[f.name]?.trim())
+    const applicable = fields.filter((f) => !(editing && f.createOnly))
+    const missing = applicable.filter((f) => f.required && !values[f.name]?.trim())
     if (missing.length) {
       toast.error(`Required: ${missing.map((f) => f.label).join(', ')}`)
       return
     }
-    onCreate(values)
-    toast.success(`Saved to ${title}.`)
+    if (editing && onUpdate) {
+      onUpdate(editing, values)
+      toast.success(`${describe(editing)} updated.`)
+    } else {
+      onCreate(values)
+      toast.success(`Saved to ${title}.`)
+    }
     setOpen(false)
+    setEditing(null)
     setValues(initial)
   }
+
+  const tableColumns = useMemo<ColumnDef<TData, any>[]>(() => {
+    if (!onUpdate && !onDelete) return columns
+    return [
+      ...columns,
+      {
+        id: 'actions',
+        // Visually hidden header: the icons are self-describing and the column
+        // should not claim horizontal space away from the data.
+        header: () => <span className="sr-only">Actions</span>,
+        enableSorting: false,
+        enableHiding: false,
+        meta: { align: 'right', label: 'Actions', pinMobile: true, className: 'w-px' },
+        cell: ({ row }) => (
+          <RowActions
+            onEdit={onUpdate ? () => openEdit(row.original) : undefined}
+            onDelete={onDelete ? () => setDeleting(row.original) : undefined}
+          />
+        ),
+      },
+    ]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columns, onUpdate, onDelete, fields, toFormValues])
+
+  const visibleFields = fields.filter((f) => !(editing && f.createOnly))
 
   return (
     <PageContainer>
@@ -84,7 +167,7 @@ export function MasterPage<TData>({
         title={title}
         description={description}
         actions={
-          <Button size="sm" onClick={() => setOpen(true)}>
+          <Button size="sm" onClick={openCreate}>
             <Plus className="size-4" /> {addLabel}
           </Button>
         }
@@ -92,7 +175,7 @@ export function MasterPage<TData>({
       {stats}
       {children}
       <DataTable
-        columns={columns}
+        columns={tableColumns}
         data={data}
         searchPlaceholder={searchPlaceholder}
         toolbar={toolbar}
@@ -103,20 +186,23 @@ export function MasterPage<TData>({
 
       <RecordSheet
         open={open}
-        onOpenChange={setOpen}
-        title={addLabel}
+        onOpenChange={(next) => {
+          setOpen(next)
+          if (!next) setEditing(null)
+        }}
+        title={editing ? `Edit ${describe(editing)}` : addLabel}
         description="Prototype only — records live in browser memory."
         footer={
           <>
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={submit}>Save</Button>
+            <Button onClick={submit}>{editing ? 'Update' : 'Save'}</Button>
           </>
         }
       >
         <FormGrid>
-          {fields.map((field) => {
+          {visibleFields.map((field) => {
             const id = `mf-${field.name}`
             const set = (v: string) => setValues((prev) => ({ ...prev, [field.name]: v }))
             return (
@@ -158,6 +244,22 @@ export function MasterPage<TData>({
           })}
         </FormGrid>
       </RecordSheet>
+
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(next) => !next && setDeleting(null)}
+        title={`Delete ${deleting ? describe(deleting) : 'record'}?`}
+        description="This removes the record from the prototype session. Reload the page to restore the seeded data."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (deleting && onDelete) {
+            onDelete(deleting)
+            toast.success(`${describe(deleting)} deleted.`)
+          }
+          setDeleting(null)
+        }}
+      />
     </PageContainer>
   )
 }
