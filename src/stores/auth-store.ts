@@ -17,7 +17,7 @@ export type SessionUser = {
 export const DEMO_USERS: SessionUser[] = [
   {
     id: 'u-01',
-    name: 'Md. Hafijur Rahman',
+    name: 'System Admin User',
     email: 'admin@seip.gov.bd',
     designation: 'System Administrator',
     role: 'admin',
@@ -71,6 +71,17 @@ export const useAuthStore = create<AuthState>()(
         return allowed === 'all' || allowed.includes(module)
       },
     }),
-    { name: 'minierp.auth' },
+    {
+      name: 'minierp.auth',
+      version: 1,
+      // Re-resolve the stored session against DEMO_USERS so profile edits
+      // (names, designations) reach browsers that already have a session.
+      migrate: (persisted) => {
+        const state = persisted as { user: SessionUser | null } | undefined
+        if (!state?.user) return state as never
+        const seed = DEMO_USERS.find((u) => u.id === state.user!.id)
+        return { ...state, user: seed ? { ...seed, role: state.user.role } : state.user } as never
+      },
+    },
   ),
 )

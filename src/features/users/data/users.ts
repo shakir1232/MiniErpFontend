@@ -59,7 +59,7 @@ export const roles: AppRole[] = [
 ]
 
 const NAMES = [
-  ['Md. Hafijur Rahman', 'System Administrator'],
+  ['System Admin User', 'System Administrator'],
   ['Md. Shafiqul Islam', 'Project Director'],
   ['Nasrin Sultana', 'Deputy Project Director'],
   ['Farhana Akter', 'Assistant Director (Finance)'],
