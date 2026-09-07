@@ -73,7 +73,7 @@ export function MasterPage<TData>({
       return
     }
     onCreate(values)
-    toast.success(`${title} record added.`)
+    toast.success(`Saved to ${title}.`)
     setOpen(false)
     setValues(initial)
   }
