@@ -26,6 +26,19 @@ import { ProcessPayrollPage } from '@/features/payroll/pages/process-payroll-pag
 import { ChallanPage } from '@/features/payroll/pages/challan-page'
 import { RemunerationStatementPage } from '@/features/payroll/pages/remuneration-statement-page'
 import { BankStatementPage } from '@/features/payroll/pages/bank-statement-page'
+import { ChartOfAccountsPage } from '@/features/accounting/pages/chart-of-accounts-page'
+import { VouchersPage } from '@/features/accounting/pages/vouchers-page'
+import {
+  AdvanceRegisterPage,
+  AdviceRegisterPage,
+  ChequeRegisterPage,
+} from '@/features/accounting/pages/registers-page'
+import {
+  GroupStatementPage,
+  LedgerStatementPage,
+  SubsidiaryLedgerPage,
+  TrialBalancePage,
+} from '@/features/accounting/pages/reports-page'
 
 /**
  * Screens that are actually built. Anything else declared in the navigation
@@ -50,6 +63,17 @@ const IMPLEMENTED: Record<string, ReactElement> = {
   '/payroll/vat-challan': <ChallanPage kind="vat" />,
   '/payroll/statements/remuneration': <RemunerationStatementPage />,
   '/payroll/statements/bank': <BankStatementPage />,
+  '/accounting/chart-of-accounts': <ChartOfAccountsPage />,
+  '/accounting/subsidiary-ledger': <SubsidiaryLedgerPage />,
+  '/accounting/vouchers/debit': <VouchersPage type="debit" />,
+  '/accounting/vouchers/credit': <VouchersPage type="credit" />,
+  '/accounting/vouchers/journal': <VouchersPage type="journal" />,
+  '/accounting/advance-control-register': <AdvanceRegisterPage />,
+  '/accounting/cheque-register': <ChequeRegisterPage />,
+  '/accounting/advice-register': <AdviceRegisterPage />,
+  '/accounting/reports/group-statement': <GroupStatementPage />,
+  '/accounting/reports/ledger-statement': <LedgerStatementPage />,
+  '/accounting/reports/trial-balance': <TrialBalancePage />,
 }
 
 export function AppRoutes() {
