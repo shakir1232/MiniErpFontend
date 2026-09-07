@@ -55,6 +55,25 @@ import {
   TrancheExpenditurePage,
   VarianceReportPage,
 } from '@/features/budget/pages/budget-reports-page'
+import {
+  AssetCategoriesPage,
+  AssetLocationsPage,
+  SuppliersPage,
+} from '@/features/assets/pages/asset-masters-page'
+import {
+  AssetAssignmentsPage,
+  AssetTransfersPage,
+  DeliveryChallansPage,
+  FixedAssetRegisterPage,
+} from '@/features/assets/pages/asset-operations-page'
+import {
+  ItemCategoriesPage,
+  ItemIssuesPage,
+  ItemReceivesPage,
+  StockPositionPage,
+  StoreItemsPage,
+  StoreRegisterPage,
+} from '@/features/store/pages/store-pages'
 
 /**
  * Screens that are actually built. Anything else declared in the navigation
@@ -111,6 +130,19 @@ const IMPLEMENTED: Record<string, ReactElement> = {
   '/budget/reports/quarterly-financial': <ProgressReportPage variant="quarterly-financial" />,
   '/budget/reports/implementation-problems': <ImplementationProblemsPage />,
   '/budget/reports/contract-implementation': <ContractImplementationPage />,
+  '/assets/suppliers': <SuppliersPage />,
+  '/assets/categories': <AssetCategoriesPage />,
+  '/assets/locations': <AssetLocationsPage />,
+  '/assets/challans': <DeliveryChallansPage />,
+  '/assets/assignments': <AssetAssignmentsPage />,
+  '/assets/transfers': <AssetTransfersPage />,
+  '/assets/register': <FixedAssetRegisterPage />,
+  '/store/categories': <ItemCategoriesPage />,
+  '/store/items': <StoreItemsPage />,
+  '/store/receives': <ItemReceivesPage />,
+  '/store/issues': <ItemIssuesPage />,
+  '/store/register': <StoreRegisterPage />,
+  '/store/stock': <StockPositionPage />,
 }
 
 export function AppRoutes() {
