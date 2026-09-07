@@ -39,6 +39,22 @@ import {
   SubsidiaryLedgerPage,
   TrialBalancePage,
 } from '@/features/accounting/pages/reports-page'
+import { BudgetItemsPage } from '@/features/budget/pages/budget-items-page'
+import { YearlyBudgetPage } from '@/features/budget/pages/yearly-budget-page'
+import { CodeWiseBudgetPage } from '@/features/budget/pages/code-wise-budget-page'
+import { ExpenditureEntryPage } from '@/features/budget/pages/expenditure-entry-page'
+import {
+  AdbGroupPage,
+  GroupMappingPage,
+  TrancheAllocationPage,
+} from '@/features/budget/pages/tranche-pages'
+import {
+  ContractImplementationPage,
+  ImplementationProblemsPage,
+  ProgressReportPage,
+  TrancheExpenditurePage,
+  VarianceReportPage,
+} from '@/features/budget/pages/budget-reports-page'
 
 /**
  * Screens that are actually built. Anything else declared in the navigation
@@ -74,6 +90,27 @@ const IMPLEMENTED: Record<string, ReactElement> = {
   '/accounting/reports/group-statement': <GroupStatementPage />,
   '/accounting/reports/ledger-statement': <LedgerStatementPage />,
   '/accounting/reports/trial-balance': <TrialBalancePage />,
+  '/budget/dpp-setup': <BudgetItemsPage kind="DPP" />,
+  '/budget/rdpp': <BudgetItemsPage kind="RDPP" />,
+  '/budget/adp-setup': <YearlyBudgetPage kind="DPP" />,
+  '/budget/rdpp-yearly': <YearlyBudgetPage kind="RDPP" />,
+  '/budget/adp-yearly': <YearlyBudgetPage kind="ADP" />,
+  '/budget/radp-yearly': <YearlyBudgetPage kind="RADP" />,
+  '/budget/rdpp-code-wise': <CodeWiseBudgetPage />,
+  '/budget/tranche-allocation': <TrancheAllocationPage />,
+  '/budget/expenditure': <ExpenditureEntryPage />,
+  '/budget/adb-group': <AdbGroupPage />,
+  '/budget/group-mapping': <GroupMappingPage />,
+  '/budget/reports/rdpp-variance': <VarianceReportPage label="RDPP" />,
+  '/budget/reports/radp-variance': <VarianceReportPage label="RADP" />,
+  '/budget/reports/tranche-expenditure': <TrancheExpenditurePage />,
+  '/budget/reports/imed-monthly': <ProgressReportPage variant="imed-monthly" />,
+  '/budget/reports/imed-quarterly': <ProgressReportPage variant="imed-quarterly" />,
+  '/budget/reports/target-achievement': <ProgressReportPage variant="target-achievement" />,
+  '/budget/reports/erd-monthly': <ProgressReportPage variant="erd-monthly" />,
+  '/budget/reports/quarterly-financial': <ProgressReportPage variant="quarterly-financial" />,
+  '/budget/reports/implementation-problems': <ImplementationProblemsPage />,
+  '/budget/reports/contract-implementation': <ContractImplementationPage />,
 }
 
 export function AppRoutes() {
